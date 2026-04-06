@@ -1,0 +1,516 @@
+{
+  "facts": {
+    "kesukaan_diva": "kucing",
+    "kebencian_diva": "keong",
+    "nama_user": null
+  },
+  "learned_answers": {},
+  "logs": [],
+  "qa_cache": {
+    "mata uang jepang": {
+      "answer": "Yen adalah mata uang Jepang. Simbol: ¥; atau dalam bahasa Jepang: en .",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Yen"
+    },
+    "mata uang indonesia": {
+      "answer": "Rupiah, atau lengkapnya Rupiah Indonesia, adalah mata uang resmi yang berlaku di Republik Indonesia. Mata uang ini dicetak dan diatur penggunaannya oleh Bank Indonesia dengan kode ISO 4217 IDR.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Rupiah"
+    },
+    "ibukota jepang": {
+      "answer": "Ibu kota Jepang adalah Tokyo.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q1490"
+    },
+    "ibukota indonesia": {
+      "answer": "Ibu kota Indonesia adalah Nusantara.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q110601629"
+    },
+    "mata uang india": {
+      "answer": "Rupee India adalah mata uang resmi negara India yang setiap satuannya dibagi menjadi 100 paisa. Simbol yang paling umum digunakan untuk rupee adalah Rs.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Rupee_India"
+    },
+    "presiden indonesia": {
+      "answer": "Pemimpin negara Indonesia: Prabowo Subianto.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q2107268"
+    },
+    "presiden india": {
+      "answer": "Pemimpin negara India: Draupadi Murmu.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q19901232"
+    },
+    "mata uang tiongkok": {
+      "answer": "Renminbi adalah mata uang resmi Tiongkok. Uang ini dicetak dan diatur penggunaannya oleh Bank Rakyat Tiongkok.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Renminbi"
+    },
+    "mata uang eropa": {
+      "answer": "Euro adalah mata uang yang dipakai di 20 negara anggota Uni Eropa. Secara giral, mata uang ini mulai dipakai sejak tanggal 1 Januari 1999, tetapi secara kartal atau fisik baru dipakai pada tanggal 1 Januari 2002.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Euro"
+    },
+    "sam altman": {
+      "answer": "Samuel H. Altman adalah seorang pengusaha, investor, dan pengembang perangkat lunak asal Amerika.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Sam_Altman"
+    },
+    "mark zuckerberg": {
+      "answer": "Mark Elliot Zuckerberg adalah seorang pemrogram komputer dan pengusaha Internet. Ia dikenal karena menciptakan situs jejaring sosial Facebook bersama temannya, yang dengan itu ia menjadi pejabat eksekutif dan presiden.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Mark_Zuckerberg"
+    },
+    "elon musk": {
+      "answer": "Elon Reeve Musk FRS adalah seorang pebisnis Amerika Serikat. Dia terkenal karena ikut mendirikan SpaceX, Tesla, The Boring Company, Neuralink, dan OpenAI.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Elon_Musk"
+    },
+    "albert einstein": {
+      "answer": "Albert Einstein adalah fisikawan teoretis, ilmuwan, filsuf sains, dan tokoh intelektual dunia kelahiran Jerman. Einstein terkenal berkat pengembangan teori relativitas, teori mekanika kuantum dan realisme ilmiah.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Albert_Einstein"
+    },
+    "mata uang malaysia": {
+      "answer": "Ringgit atau juga dikenal sebagai Ringgit Malaysia adalah mata uang Malaysia dengan simbol mata uang RM dan kode mata uang MYR. Ringgit dapat dipecah menjadi 100 sen dan mempunyai pecahan uang kertas bernilai RM100, RM50, RM20, RM10, RM5, RM2, RM1; serta koin 50, 20, 10, 5, dan 1 sen.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Ringgit"
+    },
+    "mata uang filipina": {
+      "answer": "Peso Filipina, juga dikenal sebagai piso adalah mata uang resmi di Filipina. Peso ini dibagi menjadi 100 centavo.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Peso_Filipina"
+    },
+    "mata uang vietnam": {
+      "answer": "Đồng Vietnam adalah mata uang resmi Vietnam sejak 3 Mei 1978, dan dikeluarkan oleh Bank Negara Vietnam. Mata uang ini juga digunakan di negara-negara pendahulunya, yaitu Vietnam Utara dan Vietnam Selatan, menggantikan piastre Indochina Prancis yang dipakai sebelumnya.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/%C4%90%E1%BB%93ng_Vietnam"
+    },
+    "mata uang nigeria": {
+      "answer": "Naira ialah nama mata uang resmi negara Nigeria yang setiap satuannya dibagi menjadi 100 kobo. Mata uang ini mulai pertama kali dipakai sejak tahun 1973 menggantikan mata uang sebelumnya Pound Nigeria.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Naira_Nigeria"
+    },
+    "mata uang brazil": {
+      "answer": "The Brazilian real is the official currency of Brazil. It is subdivided into 100 centavos.",
+      "source": "Wikipedia (en)",
+      "url": "https://en.wikipedia.org/wiki/Brazilian_real"
+    },
+    "mata uang korea": {
+      "answer": "Won Korea Selatan adalah mata uang resmi negara Korea Selatan. Mata uang ini dikeluarkan penggunaannya oleh Bank of Korea.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Won_Korea_Selatan"
+    },
+    "mata uang singapura": {
+      "answer": "Dolar Singapura adalah mata uang negara Singapura. Mata uang ini dicetak dan diatur penggunaannya oleh Otoritas Moneter Singapura.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Dolar_Singapura"
+    },
+    "mata uang thailand": {
+      "answer": "Bāht adalah mata uang resmi Thailand. Penerbitan mata uang ini merupakan tanggung jawab Bank of Thailand.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Baht"
+    },
+    "mata uang britania raya": {
+      "answer": "Pound sterling (£) atau pounds saja (GBP) adalah mata uang Britania Raya. Selain di Britania Raya, Pound sterling juga digunakan di Kepulauan Falkland, Gibraltar, Guernsey, Jersey, Pulau Man, dan lain-lain.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Pound_sterling"
+    },
+    "ibu kota indonesia": {
+      "answer": "Ibu kota Indonesia adalah Nusantara.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q110601629"
+    },
+    "mata uang jerman": {
+      "answer": "Deutsche Mark atau Mark Jerman adalah mata uang resmi Jerman Barat dari 1948 hingga penyatuan Jerman pada 1990 dan mata uang resmi Jerman sejak saat itu hingga diperkenalkannya euro pada 1999. Deutsche Mark pertama kali dikeluarkan pada tahun 1948 saat pendudukan sekutu menggantikan Reichsmark.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Mark_Jerman"
+    },
+    "ibu kota jepang": {
+      "answer": "Ibu kota Jepang adalah Tokyo.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q1490"
+    },
+    "mata uang amerika serikat": {
+      "answer": "The United States dollar is the official currency of the United States and several other countries. The Coinage Act of 1792 introduced the U.S.",
+      "source": "Wikipedia (en)",
+      "url": "https://en.wikipedia.org/wiki/United_States_dollar"
+    },
+    "mata uang rusia": {
+      "answer": "Rubel Soviet ; adalah mata uang Uni Soviet dan Gagauzia. Satu rubel memiliki nilai 100 kopek,.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Rubel_Soviet"
+    },
+    "mata uang italia": {
+      "answer": "Lira adalah nama mata uang beberapa negara, sekaligus bekas mata uang Italia, San Marino, Lebanon dan Vatikan.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Lira"
+    },
+    "ibu kota malaysia": {
+      "answer": "Ibu kota Malaysia adalah Kuala Lumpur.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q1865"
+    },
+    "mata uang spanyol": {
+      "answer": "Peseta adalah mata uang Spanyol sejak tahun 1869 hingga 2002 ketika digantikan oleh euro. Seiring dengan franc Prancis, peseta juga merupakan mata uang de facto yang digunakan di negara Andorra.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Peseta_Spanyol"
+    },
+    "mata uang belanda": {
+      "answer": "Dolar Amerika Serikat adalah mata uang resmi Amerika Serikat dan beberapa negara lain. Undang -Undang Koin tahun 1792 memperkenalkan dolar A.S.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Dolar_Amerika_Serikat"
+    },
+    "mata uang swiss": {
+      "answer": "Franc Swiss merupakan mata uang negara Swiss dan Liechtenstein sejak tahun 1798. Franc Swiss juga merupakan alat pembayaran yang sah di area eksklave Italia Campione d'Italia.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Franc_Swiss"
+    },
+    "capital tiongkok": {
+      "answer": "Ibu kota Tiongkok adalah Beijing.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q956"
+    },
+    "capital india": {
+      "answer": "Ibu kota India adalah New Delhi.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q987"
+    },
+    "capital korea selatan": {
+      "answer": "Ibu kota Korea Selatan adalah Seoul.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q8684"
+    },
+    "capital singapura": {
+      "answer": "Ibu kota Singapura adalah Singapura.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q334"
+    },
+    "mata uang uni eropa": {
+      "answer": "Euro adalah mata uang yang dipakai di 20 negara anggota Uni Eropa. Secara giral, mata uang ini mulai dipakai sejak tanggal 1 Januari 1999, tetapi secara kartal atau fisik baru dipakai pada tanggal 1 Januari 2002.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Euro"
+    },
+    "capital thailand": {
+      "answer": "Ibu kota Thailand adalah Bangkok.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q1861"
+    },
+    "capital filipina": {
+      "answer": "Ibu kota Filipina adalah Manila.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q1461"
+    },
+    "capital vietnam": {
+      "answer": "Ibu kota Vietnam adalah Hanoi.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q1858"
+    },
+    "capital britania raya": {
+      "answer": "Ibu kota Britania Raya adalah London.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q84"
+    },
+    "capital jerman": {
+      "answer": "Ibu kota Jerman adalah Berlin.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q64"
+    },
+    "capital spanyol": {
+      "answer": "Ibu kota Spanyol adalah Madrid city.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q116170766"
+    },
+    "capital belanda": {
+      "answer": "Ibu kota Belanda adalah Den Haag.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q36600"
+    },
+    "capital swiss": {
+      "answer": "Ibu kota Swiss adalah Bern.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q70"
+    },
+    "capital uni eropa": {
+      "answer": "Ibu kota Uni Eropa adalah Kota Brussel.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q239"
+    },
+    "president jepang": {
+      "answer": "Pemimpin negara Jepang: Naruhito.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q217096"
+    },
+    "president tiongkok": {
+      "answer": "Pemimpin negara Tiongkok: Soong Ching-ling.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q17132"
+    },
+    "president jerman": {
+      "answer": "Pemimpin negara Germany: Frank-Walter Steinmeier.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q76658"
+    },
+    "president korea selatan": {
+      "answer": "Pemimpin negara Korea Selatan: Lee Jae-myung.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q12612463"
+    },
+    "president singapura": {
+      "answer": "Pemimpin negara Singapura: Tharman Shanmugaratnam.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q983752"
+    },
+    "president filipina": {
+      "answer": "Pemimpin negara Filipina: Bongbong Marcos.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q983324"
+    },
+    "president vietnam": {
+      "answer": "Pemimpin negara Vietnam: Tô Lâm.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q10831196"
+    },
+    "president britania raya": {
+      "answer": "Pemimpin negara Britania Raya: George V.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q269412"
+    },
+    "president prancis": {
+      "answer": "Pemimpin negara Prancis: Vincent Auriol.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q158772"
+    },
+    "president italia": {
+      "answer": "Pemimpin negara Italia: Sergio Mattarella.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q3956186"
+    },
+    "president spanyol": {
+      "answer": "Pemimpin negara Spanyol: Francisco Franco.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q29179"
+    },
+    "president belanda": {
+      "answer": "Pemimpin negara Belanda: Pemimpin.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q2079957"
+    },
+    "president swiss": {
+      "answer": "Pemimpin negara Swiss: Dewan Federal Swiss.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q30917"
+    },
+    "flag indonesia": {
+      "answer": "Bendera Indonesia atau biasa juga disebut Sang Merah Putih, adalah bendera negara Indonesia dengan dua warna, dengan dua garis horizontal, merah (atas) dan putih (bawah) dengan rasio keseluruhan 2:3. Bendera negara berbentuk empat persegi panjang dengan ukuran lebar 2/3 (dua-pertiga) dari panjang dengan bagian atas berwarna merah dan bagian bawah berwarna putih yang kedua bagiannya berukuran sama.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Indonesia"
+    },
+    "flag jepang": {
+      "answer": "Bendera nasional Jepang adalah sebuah bendera berbidang putih dengan lingkaran merah tua di tengahnya. Bendera ini secara resmi disebut Nisshōki , tetapi secara umum dikenal sebagai Hinomaru .",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Jepang"
+    },
+    "flag india": {
+      "answer": "Bendera India diadopsi oleh Majelis Konstitusi India pada tanggal 22 Juli 1947, 24 hari sebelum hari kemerdekaan India dari Britania Raya. Di India, istilah \"triwarna\" hampir selalu menunjuk pada bendera India.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_India"
+    },
+    "flag jerman": {
+      "answer": "Bendera Jerman pertama kali diperkenalkan pada tahun 1919. Pada tahun 1949 bendera ini dipakai untuk negara Jerman Barat.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Jerman"
+    },
+    "flag tiongkok": {
+      "answer": "Bendera Republik Rakyat Tiongkok, yang dikenal dengan nama Bendera Merah Lima Bintang diciptakan oleh Zeng Liansong, seorang seniman terkenal dari wilayah Ruian, Zhejiang.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Tiongkok"
+    },
+    "flag korea selatan": {
+      "answer": "Bendera Korea Selatan, atau Taegukgi adalah bendera nasional Republik Korea. Bendera ini memiliki tiga bagian: latar belakang putih, Taeguk merah dan biru di tengah-tengah, dan empat trigram hitam, yang dipilih dari yang semula ada delapan, di setiap sudut bendera.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Korea_Selatan"
+    },
+    "flag korea utara": {
+      "answer": "Bendera Korea Utara diterapkan pada 8 September 1948, sebagai lambang dan bendera nasional.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Korea_Utara"
+    },
+    "flag vietnam": {
+      "answer": "Bendera Vietnam diperkenalkan pada tanggal 30 November 1955. Bintang berwarna kuning di tengah melambangkan kepimpinan Partai Komunis Vietnam di negara itu.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Vietnam"
+    },
+    "flag filipina": {
+      "answer": "Bendera Filipina, dalam Bahasa Tagalog atau Bahasa Filipino dikenal sebagai Pambansang Watawat, diadopsi tanggal 12 Juni 1898. Bendera ini merupakan bendera triwarna dengan warna biru, merah, dan sebuah segitiga sama sisi berwarna putih di sisi tiang.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Filipina"
+    },
+    "flag spanyol": {
+      "answer": "Bendera Spanyol pertama kali diperkenalkan Oleh Spanyol pada 19 Desember 1981) dengan lambang negara beserta latar belakang berwarna kuning. Bendera ini pertama kali diluncurkan oleh Konstitusi Spanyol 1978.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Spanyol"
+    },
+    "flag swiss": {
+      "answer": "Bendera Swiss diperkenalkan sejak tahun 1889. Bendera ini pertama kali ditemukan pada abad ke-12.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Swiss"
+    },
+    "bahasa indonesia": {
+      "answer": "Bahasa Indonesia adalah bahasa resmi dan nasional Indonesia. Bahasa Indonesia merupakan varietas yang dibakukan dari bahasa Melayu, sebuah bahasa rumpun Austronesia yang digolongkan ke dalam rumpun Melayik yang sendirinya merupakan cabang turunan dari cabang Melayu-Polinesia.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bahasa_Indonesia"
+    },
+    "bahasa jepang": {
+      "answer": "Bahasa Jepang adalah bahasa resmi di Jepang dengan jumlah penutur 128 juta jiwa di seluruh dunia.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bahasa_Jepang"
+    },
+    "bahasa tiongkok": {
+      "answer": "Bahasa Tionghoa atau Bahasa Cina adalah bagian dari rumpun bahasa Sino-Tibet. Meskipun kebanyakan orang Tionghoa menganggap berbagai varian bahasa Tionghoa lisan sebagai satu bahasa, variasi dalam bahasa-bahasa lisan tersebut sebanding dengan variasi-variasi yang ada dalam misalkan bahasa Roman; bahasa tertulisnya juga telah berubah bentuk seiring dengan perjalanan waktu, meski lebih lambat dibandingkan dengan bentuk lisannya, dan oleh sebab itu mampu melebihi variasi-variasi dalam bentuk lisannya.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bahasa_Tionghoa"
+    },
+    "bahasa jerman": {
+      "answer": "Bahasa Jerman adalah anggota bahasa Jermanik Barat yang dipakai sebagai bahasa pengantar terutama di kawasan Eropa Tengah. Bahasa ini adalah salah satu bahasa yang banyak dituturkan di Eropa dan pernah menjadi bahasa pengantar antarbangsa yang penting hingga awal abad ke-20.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bahasa_Jerman"
+    },
+    "bahasa korea": {
+      "answer": "Bahasa Korea adalah bahasa yang paling luas digunakan di Korea, dan merupakan bahasa resmi Korea Selatan dan Korea Utara. Bahasa ini juga dituturkan secara luas di Yanbian, Tiongkok timur laut.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bahasa_Korea"
+    },
+    "president rusia": {
+      "answer": "Pemimpin negara Rusia: Vladimir Putin.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q7747"
+    },
+    "president korea utara": {
+      "answer": "Pemimpin negara North Korea: Kim Jong-un.",
+      "source": "Wikidata (P35/P6)",
+      "url": "https://www.wikidata.org/wiki/Q56226"
+    },
+    "capital italia": {
+      "answer": "Ibu kota Italia adalah Roma.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q220"
+    },
+    "capital rusia": {
+      "answer": "Ibu kota Rusia adalah Moscow.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q649"
+    },
+    "flag malaysia": {
+      "answer": "Bendera Malaysia juga dikenal sebagai Garis Kemuliaan adalah bendera nasional Malaysia. Bendera ini terdiri dari bidang 14 garis merah dan putih yang berselang-seling di sepanjang ujung bendera dan kanton biru dengan bulan sabit dan bintang berujung 14 yang dikenal sebagai Bintang Persekutuan.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Malaysia"
+    },
+    "flag singapura": {
+      "answer": "Bendera Singapura adalah bendera nasional negara Singapura. Bendera ini diadopsi pada tahun 1959, tahun ketika Singapura menjadi pemerintahan sendiri di dalam Kekaisaran Inggris.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Singapura"
+    },
+    "flag britania raya": {
+      "answer": "Britania Raya menggunakan bendera kerajaan Britania Raya yang umumnya dikenal sebagai Union Flag atau Union Jack. Bendera ini pernah digunakan pada suatu ketika oleh negara-negara yang berada di dalam Kekaisaran Britania.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Britania_Raya"
+    },
+    "flag prancis": {
+      "answer": "Bendera Prancis atau disebut juga sebagai Tricolore (Triwarna) merupakan bendera nasional Prancis yang pertama kali diperkenalkan pada 27 Juli 1789 oleh Gilbert du Motier de La Fayette. Pada tanggal 27 Juli, tali pengikat triwarna diadopsi sebagai bagian dari seragam Garda Nasional, pasukan polisi nasional yang menggantikan milisi.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Prancis"
+    },
+    "flag italia": {
+      "answer": "Templat:SHORTDESC:",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Italia"
+    },
+    "flag belanda": {
+      "answer": "Bendera Belanda adalah bendera triwarna horizontal berwarna merah, putih, dan biru. Desain bendera ini berasal dari varian Prinsenvlag di akhir abad ke-16 yang berwarna oranye-putih-biru, yang berkembang pada awal abad ke-17 sebagai Statenvlag berwarna merah-putih-biru, bendera angkatan laut dari Dewan Negara Republik Belanda, menjadikan bendera Belanda sebagai bendera triwarna tertua yang masih digunakan.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Belanda"
+    },
+    "flag rusia": {
+      "answer": "Bendera Federasi Rusia merupakan bendera triwarna horizontal putih-biru-merah. Bendera ini pertama kali diperkenalkan pada tahun 1696 sebagai panji untuk kapal dagang di bawah Ketsaran Rusia.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bendera_Rusia"
+    },
+    "bahasa malaysia": {
+      "answer": "Bahasa Melayu Malaysia atau bahasa Malaysia atau bahasa Melayu Standar saja adalah bentuk bahasa Melayu yang dibakukan dan digunakan sebagai bahasa kebangsaan resmi di Malaysia menurut baku yang ditetapkan oleh Dewan Bahasa dan Pustaka Malaysia. Bahasa Melayu Malaysia Baku lebih dari 80% kognitif dengan Bahasa Indonesia Baku yang seakar dan dituturkan oleh lebih dari 15 juta orang di Malaysia.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bahasa_Melayu_Malaysia"
+    },
+    "bahasa singapura": {
+      "answer": "Menurut Konstitusi Singapura, empat bahasa resmi di Singapura adalah bahasa Melayu, Mandarin, Tamil, dan Inggris, sementara bahasa nasionalnya adalah Melayu. Tiga bahasa selain bahasa Inggris dipilih untuk mewakili kelompok etnis utama yang ada di Singapura pada saat ini: Mandarin meraih status tersebut sejak pengenalan sekolah-sekolah dengan bahasa pengantar Tionghoa; Melayu dianggap sebagai \"yang paling dipilih\" untuk komunitas Melayu; dan Tamil untuk kelompok etnis India terbesar di Singapura, selain menjadi \"bahasa dengan sejarah pendidikan terpanjang di Malaysia dan Singapura\".",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bahasa_di_Singapura"
+    },
+    "bahasa filipina": {
+      "answer": "Rumpun bahasa Filipina, juga disebut sebagai Filipinik, adalah cabang Austronesia yang diusulkan pada tahun 1991 oleh Robert Blust untuk menggabungkan semua bahasa di Filipina, Kepulauan Lanyu, bagian utara pulau Sulawesi, dan Sabah ke dalam satu kelompok. Alasannya adalah walau letak kepulauan Filipina dekat dengan pusat penyebaran bahasa Austronesia keluar dari Taiwan, keragaman bahasa di antara sekitar 150 bahasa di Filipina tidak begitu besar.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Rumpun_bahasa_Filipina"
+    },
+    "bahasa vietnam": {
+      "answer": "Bahasa Vietnam adalah bahasa resmi di Vietnam.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bahasa_Vietnam"
+    },
+    "bahasa prancis": {
+      "answer": "Bahasa Prancis adalah salah satu bahasa paling penting dari kelompok bahasa Roman setelah bahasa Spanyol dan bahasa Portugis. Bahasa Prancis merupakan bahasa yang paling banyak dituturkan ke-11 di dunia.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bahasa_Prancis"
+    },
+    "bahasa italia": {
+      "answer": "Bahasa Italia adalah sejenis bahasa Roman yang dituturkan oleh sekitar 70 juta orang, mayoritas di Italia. Bahasa Italia Standar adalah berdasarkan dialek Toskana dan semacam campuran bahasa-bahasa di Italia Selatan dan bahasa Gallo-Roman di Utara.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bahasa_Italia"
+    },
+    "bahasa spanyol": {
+      "answer": "Bahasa Spanyol atau Kastila (castellano) adalah suatu bahasa Iberia-Roman dari Spanyol, dan bahasa ketiga yang paling banyak digunakan di dunia. Bahasa Spanyol merupakan bahasa pertama bagi sekitar 500 juta orang di dunia, atau bagi 600 juta orang jika termasuk bukan penutur asli.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bahasa_Spanyol"
+    },
+    "bahasa belanda": {
+      "answer": "Bahasa Belanda (Nederlands) adalah bahasa yang dituturkan oleh 20 juta jiwa di seluruh dunia dan merupakan bagian dari bahasa Jermanik Barat yang besar, bersama dengan Bahasa Inggris dan Bahasa Jerman di dalamnya. Bahasa Belanda berdasarkan bahasa Franka Hilir.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bahasa_Belanda"
+    },
+    "bahasa swiss": {
+      "answer": "Templat:Budaya Swiss Empat bahasa nasional di Swiss adalah bahasa Jerman, Prancis, Italia, dan Romansh.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bahasa_di_Swiss"
+    },
+    "bahasa rusia": {
+      "answer": "Bahasa Rusia merupakan bahasa yang termasuk dalam Slavia Timur yang utamanya dituturkan di Rusia sekaligus merupakan bahasa ibu bagi sejumlah besar bangsa Rusia. Bahasa ini termasuk dalam cabang Balto-Slavia dari rumpun Indo-Eropa dan merupakan salah satu dari empat bahasa hidup dalam rumpun Slavia Timur.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Bahasa_Rusia"
+    },
+    "penemu telepon": {
+      "answer": "Alexander Graham Bell adalah seorang ilmuwan dan penemu asal Skotlandia yang dikenal sebagai penemu telepon.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Reka_cipta_telepon"
+    },
+    "thomas alva edison": {
+      "answer": "Thomas Alva Edison adalah pereka cipta dan pengusaha yang mengembangkan banyak peralatan penting. Ia mengembangkan banyak perangkat di berbagai bidang, seperti pembangkit tenaga listrik, komunikasi massa, rekaman suara, dan gambar bergerak.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Thomas_Edison"
+    },
+    "capital malaysia": {
+      "answer": "Ibu kota Malaysia adalah Kuala Lumpur.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q1865"
+    },
+    "tora": {
+      "answer": "Tora Sudiro adalah pemeran, pelawak, musikus, dan pembawa acara Indonesia. Tora merupakan suami dari Mieke Amalia.",
+      "source": "Wikipedia (id)",
+      "url": "https://id.wikipedia.org/wiki/Tora_Sudiro"
+    },
+    "capital brazil": {
+      "answer": "Ibu kota Brasil adalah Brasilia.",
+      "source": "Wikidata (P36)",
+      "url": "https://www.wikidata.org/wiki/Q2844"
+    }
+  }
+}

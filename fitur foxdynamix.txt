@@ -1,0 +1,164 @@
+
+
+# 🚀 **FITUR YANG SUDAH TERPASANG DI FoxDynamix**
+
+---
+
+## 🧠 1. **Mode System (State Machine)**
+
+🔹 **Idle Mode**
+• UI controller & chat *mati*
+• hanya Tora yang napas / menunggu
+
+🔹 **Chat Mode**
+• Chat aktif
+• controller *mati*
+• UI siap ngobrol
+
+🔹 **Manual Mode**
+• Controller aktif
+• Chat *mati*
+• ESP32 siap perintah manual
+
+Dan berpindah dengan tombol di header 🟦
+
+---
+
+## 🤖 2. **Serial Bridge ESP32**
+
+🟢 Web ↔ Serial realtime
+
+* Kirim perintah manual
+* Kirim state robot
+* Menerima log dari ESP32
+* Menampilkan di panel tengah
+
+---
+
+## 💬 3. **Realtime Chat**
+
+✔ Chat input user
+✔ pesan user tampil di kanan
+✔ response bot tampil di kiri
+✔ scroll otomatis
+✔ auto link conversion
+✔ markdown bold support
+
+---
+
+## 🔄 4. **Typewriter Text Animation**
+
+✨ Jawaban tidak langsung muncul
+• huruf muncul satu-satu
+• terasa “bot lagi mikir”
+• memberi feel AI hidup
+
+---
+
+## 🛡️ 5. **Anti-Spam Chat**
+
+🚫 tidak bisa klik “Kirim” berulang
+• Input & tombol dinonaktifkan saat Tora sedang menjawab
+• Baru aktif kembali setelah jawaban selesai
+
+---
+
+## 🔁 6. **Idle Chat Memory**
+
+🕒 kalau user diam terlalu lama
+Tora akan otomatis ngomong:
+
+> “Div… kamu masih di situ kan? 🦊”
+
+supaya **UI tetap kelihatan hidup** 🔥
+
+---
+
+## 📚 7. **Knowledge Plugins**
+
+Tora bisa jawab dengan:
+
+✔ Wikipedia (ID & EN)
+✔ Wikidata (ibu kota / presiden / flag)
+✔ DuckDuckGo fallback
+✔ Smart fallback web scraping
+
+Ringkas, bersih, dan sumbernya ditampilkan.
+
+---
+
+## 🧠 8. **Intent Handling**
+
+Tora bisa nge-parse:
+
+➡ “apa ibu kota X?”
+➡ “siapa presiden X?”
+➡ “mata uang X?”
+➡ “kenapa …”
+➡ cuaca
+
+jadi bukan sekedar keyword matching.
+
+---
+
+## 🌦️ 9. **Weather Query**
+
+Saat user nanya:
+
+```
+cuaca [kota]
+```
+
+Tora bisa langsung jawab:
+🌤️ kondisi suhu, angin, cuaca saat ini
+
+---
+
+## 🗃️ 10. **Repeat & Emotion Memory**
+
+Tora bisa nanggapi pertanyaan yang diulang dengan:
+😅 “Hehe… Div nanya lagi ya?”
+😤 “Hadeh … ini udah ketiga kalinya ya…”
+
+jadi terasa **lebih sopan / hidup**.
+
+---
+
+## 🦊 11. **State-Driven Tora Animation**
+
+Tora status visual berdasarkan isi chat & serial:
+
+| STATE  | Efek visual                       |
+| ------ | --------------------------------- |
+| IDLE   | napas + glow biru                 |
+| THINK  | pulse killed + glow kuning        |
+| ANSWER | pulse hijau selama ngetik         |
+| ERROR  | pulse merah (nanti bisa ditambah) |
+
+panel kanan visual nyala sesuai state 🔥
+
+---
+
+## 🖼️ 12. **Visual UI Panel**
+
+Panel terbagi:
+
+🎮 Controller kiri
+📟 Serial log tengah
+🖼️ Tora core kanan
+💬 chat bawah
+
+---
+
+## 🔁 13. **Clean Logging**
+
+Serial log tampil rapi:
+
+```
+Serial ➔ ESP32: STATE:THINK
+Serial ➔ ESP32: STATE:ANSWER
+```
+
+* semua log backend ditampilkan realtime.
+
+
