@@ -86,47 +86,25 @@ def clean_and_shorten(text: str, max_sentences: int = 2) -> str:
 
 def translate_to_indonesia(text):
     kamus = {
-        # buang kata sampah
-        "a": "",
-        "an": "",
-        "the": "",
-        "of": "",
-        "picture": "",
-        "image": "",
-
-        # struktur
-        "close up": "tampak dekat",
-        "close-up": "tampak dekat",
-        "close": "",
-        "up": "",
-
-        # objek
         "cat": "kucing",
         "dog": "anjing",
         "bird": "burung",
-
-        # warna
         "black": "hitam",
         "white": "putih",
-        "colorful": "berwarna",
-
-        # posisi
-        "on": "di",
-        "on top of": "di atas",
-        "top of": "di atas",
-        "in": "di",
         "standing": "berdiri",
         "sitting": "duduk",
-
-        # objek tambahan
-        "pole": "tiang",
-        "tree": "pohon",
+        "on": "di",
+        "top": "atas",
+        "fence": "pagar",
+        "a": "",
+        "of": "",
     }
 
     text = text.lower()
 
+    # 🔥 PAKAI WORD BOUNDARY (INI KUNCI)
     for en, idn in kamus.items():
-        text = text.replace(en, idn)
+        text = re.sub(rf"\b{en}\b", idn, text)
 
     return text
 
@@ -147,7 +125,7 @@ def get_image_caption(image):
         output_ids = model.generate(
             pixel_values,
             max_length=20,
-            num_beams=2,  # 🔥 INI PENTING
+            num_beams=5,  # 🔥 INI PENTING
             no_repeat_ngram_size=2,
             early_stopping=True,
         )
@@ -156,14 +134,25 @@ def get_image_caption(image):
 
     caption = caption.lower().strip()
 
-    #🔥 normalisasi typo dulu
-    caption = caption.replace("blck", "black")
-    caption = caption.replace("ct", "cat")
-    caption = caption.replace("brd", "bird")
-    caption = caption.replace("fce", "face")
+    caption = re.sub(r"[^a-zA-Z\s]", "", caption)
+    caption = " ".join(caption.split())
+
+    # 🔥 NORMALISASI KATA RUSAK
+    fix_map = {
+        "blck": "black",
+        "blk": "black",
+        "ct": "cat",
+        "stnddig": "standing",
+        "stnding": "standing",
+        "brd": "bird",
+        "fce": "face",
+    }
+
+    for wrong, correct in fix_map.items():
+        caption = caption.replace(wrong, correct)
 
     # 🔥 hapus kata aneh
-    bad_words = ["somedies", "stnddig"]
+    bad_words = ["somedies"]
     for w in bad_words:
         caption = caption.replace(w, "")
     # 🔥 rapihin spasi
@@ -171,11 +160,16 @@ def get_image_caption(image):
 
     # 🔥 translate
     caption_id = translate_to_indonesia(caption)
+    caption_id = " ".join(caption_id.split())
 
     if not caption_id.strip():
         return "objek yang kurang jelas"
 
+    if len(caption.split()) < 2:
+        return "objek yang sulit dikenali"
+
     return f"seekor {caption_id}"
+
 
 # =========================
 # ESP32 (opsional)
@@ -1053,7 +1047,8 @@ def on_chat_message(data):
             img = decode_image(image)
 
             print("📏 resize...")
-            img = img.resize((32,32))
+            img = img.resize((224, 224))
+            img = img.convert("RGB")
 
             print("🧠 generate caption...")
             caption = get_image_caption(img)
@@ -1066,13 +1061,15 @@ def on_chat_message(data):
         except Exception as e:
             print("❌ ERROR:", e)
             reply = "Gambar gagal diproses 😭"
+        
+        LAST_CHAT_TIME = time.time()
 
-        emit("reply", {"msg": reply})
-        return
+        socketio.emit("reply", {"msg": reply})
+        
+        send_serial("STATE:ANSWER")
+        socketio.sleep(0.05)
+        send_serial("STATE:DONE")
 
-    global LAST_CHAT_TIME
-    LAST_CHAT_TIME = time.time()
-    if not raw:
         return
 
     low = raw.lower()

@@ -242,12 +242,14 @@
             imgInput.click()
           }
           imgInput.onchange = (event) => {
+            if (selectedImage) return
+
             const file = event.target.files[0]
             if (!file) return
 
             const reader = new FileReader()
 
-            reader.onload = (e) => {
+            reader.onloadend = (e) => {
               selectedImage = e.target.result
 
               console.log("✅ IMAGE SIAP")
@@ -281,7 +283,7 @@
           }
 
           const text = chatInput.value.trim()
-          const currentImage = selectedImage
+          const currentImage = selectedImage ? String(selectedImage) : null
 
           console.log("📨 TEXT:", text)
           console.log("🖼 IMAGE:", selectedImage)
