@@ -11,7 +11,7 @@ import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit
 
 import requests
@@ -34,7 +34,7 @@ import io
 load_dotenv()
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 current_mode = "idle"
 
 # 🔥 TAMBAH DI SINI
@@ -98,9 +98,36 @@ def translate_to_indonesia(text):
         "fence": "pagar",
         "a": "",
         "of": "",
+        "fish": "ikan",
+        "yellow": "kuning",
+        "striped": "belang",
+        "close": "",
+        "up": "",
+        "close up": "jarak dekat",
+        "picture": "",
+        "picature": "",
+        "and": "dan",
+        "rock": "batu",
+        "on": "di",
+        "top": "atas",
+        "two": "dua",
+        "three": "tiga",
+        "one": "satu",
+        "are": "",
+        "is": "",
+        "in": "di",
+        "field": "lapangan",
+        "grass": "rumput",
+        "grassy": "berumput",
+        "giraffe": "jerapah",
+        "giraffes": "jerapah",
     }
 
     text = text.lower()
+
+    # 🔥 HANDLE FRASE DULU
+    text = text.replace("close up", "jarak dekat")
+    text = text.replace("closeup", "jarak dekat")
 
     # 🔥 PAKAI WORD BOUNDARY (INI KUNCI)
     for en, idn in kamus.items():
@@ -162,11 +189,30 @@ def get_image_caption(image):
     caption_id = translate_to_indonesia(caption)
     caption_id = " ".join(caption_id.split())
 
+    # 🔥 BERSIHKAN SAMPAH
+    caption_id = re.sub(r"\b(close|picture|image)\b", "", caption_id)
+    caption_id = " ".join(caption_id.split())
+
+    # 🔥 PRIORITAS OBJEK DI DEPAN
+    words = caption_id.split()
+
+    priority = ["ikan", "kucing", "anjing", "burung"]
+
+    for p in priority:
+        if p in words:
+            words.remove(p)
+            caption_id = p + " " + " ".join(words)
+            break
+
     if not caption_id.strip():
         return "objek yang kurang jelas"
 
     if len(caption.split()) < 2:
         return "objek yang sulit dikenali"
+
+    # 🔥 HANDLE JAMAK FINAL
+    if caption_id.startswith("dua "):
+        return caption_id.replace("dua ", "dua ekor ")
 
     return f"seekor {caption_id}"
 
@@ -226,14 +272,17 @@ def serial_reader():
         time.sleep(0.1)
 
 
+last_idle_sent = 0
+
+
 def idle_talk_loop():
-    global LAST_CHAT_TIME  # 🔥 INI YANG KURANG
+    global LAST_CHAT_TIME, last_idle_sent
 
     while True:
         now = time.time()
         idle = now - LAST_CHAT_TIME
 
-        if idle > IDLE_SECONDS:
+        if idle > IDLE_SECONDS and now - last_idle_sent > 15:  # 🔥 cooldown 15 detik
             msg = random.choice(
                 [
                     "Div… kamu masih di situ kan? 🦊",
@@ -244,10 +293,10 @@ def idle_talk_loop():
                 ]
             )
 
-            socketio.emit("reply", {"msg": msg})
+            socketio.emit("reply", {"msg": msg}, to=None)
 
-            # reset biar nggak spam
-            LAST_CHAT_TIME = time.time()
+            last_idle_sent = now  # 🔥 update cooldown
+            LAST_CHAT_TIME = now  # 🔥 INI KUNCINYA
 
         time.sleep(3)
 
@@ -1032,6 +1081,7 @@ def simplify_why_question(q: str) -> str:
 
 @socketio.on("chat_message")
 def on_chat_message(data):
+    sid = request.sid
     global LAST_QUESTION
     raw = data.get("msg", "").strip()
     image = data.get("image")
@@ -1061,11 +1111,13 @@ def on_chat_message(data):
         except Exception as e:
             print("❌ ERROR:", e)
             reply = "Gambar gagal diproses 😭"
-        
+
         LAST_CHAT_TIME = time.time()
 
-        socketio.emit("reply", {"msg": reply})
-        
+        socketio.emit("reply", {"msg": reply}, to=sid)
+
+        socketio.sleep(0.1)
+
         send_serial("STATE:ANSWER")
         socketio.sleep(0.05)
         send_serial("STATE:DONE")
