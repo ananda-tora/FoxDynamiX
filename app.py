@@ -65,7 +65,8 @@ import random
 
 global LAST_CHAT_TIME
 LAST_CHAT_TIME = time.time()
-IDLE_SECONDS = 25  # boleh 20–40 detik, sesuka kamu
+IS_PROCESSING = False
+IDLE_SECONDS = 40  # boleh 20–40 detik, sesuka kamu
 
 # HTTP session umum
 session = requests.Session()
@@ -121,7 +122,13 @@ def translate_to_indonesia(text):
         "grassy": "berumput",
         "giraffe": "jerapah",
         "giraffes": "jerapah",
+        "rose": "mawar",
+        "blooming": "mekar",
+        "tree": "pohon",
+        "middle": "tengah",
     }
+
+    text = re.sub(r"\b(the|a|an)\b", "", text)
 
     text = text.lower()
 
@@ -214,8 +221,18 @@ def get_image_caption(image):
     if caption_id.startswith("dua "):
         return caption_id.replace("dua ", "dua ekor ")
 
-    return f"seekor {caption_id}"
+    hewan = ["kucing", "anjing", "burung", "ikan", "jerapah", "kura-kura", "gajah"]
 
+    if caption_id.startswith("dua "):
+        if any(h in caption_id for h in hewan):
+            return caption_id.replace("dua ", "dua ekor ")
+        else:
+            return caption_id.replace("dua ", "dua buah ")
+
+    if any(h in caption_id for h in hewan):
+        return f"seekor {caption_id}"
+
+    return f"sebuah {caption_id}"
 
 # =========================
 # ESP32 (opsional)
@@ -282,7 +299,7 @@ def idle_talk_loop():
         now = time.time()
         idle = now - LAST_CHAT_TIME
 
-        if idle > IDLE_SECONDS and now - last_idle_sent > 15:  # 🔥 cooldown 15 detik
+        if not IS_PROCESSING and idle > IDLE_SECONDS and now - last_idle_sent > 30:
             msg = random.choice(
                 [
                     "Div… kamu masih di situ kan? 🦊",
@@ -296,9 +313,10 @@ def idle_talk_loop():
             socketio.emit("reply", {"msg": msg}, to=None)
 
             last_idle_sent = now  # 🔥 update cooldown
+
             LAST_CHAT_TIME = now  # 🔥 INI KUNCINYA
 
-        time.sleep(3)
+        time.sleep(30)
 
 
 threading.Thread(target=serial_reader, daemon=True).start()
@@ -1082,312 +1100,330 @@ def simplify_why_question(q: str) -> str:
 @socketio.on("chat_message")
 def on_chat_message(data):
     sid = request.sid
-    global LAST_QUESTION
-    raw = data.get("msg", "").strip()
-    image = data.get("image")
+    global LAST_QUESTION, IS_PROCESSING, LAST_CHAT_TIME
 
-    print("MASUK CHAT:", raw)
+    IS_PROCESSING = True  # 🔥 TAMBAH INI
+    LAST_CHAT_TIME = time.time()  # 🔥 INI KUNCI
 
-    # 🔥 TAMBAH BLOK INI
-    if image and isinstance(image, str) and image.startswith("data:image"):
-        try:
-            print("🔥 MASUK IMAGE MODE")
+    try:
 
-            print("📦 decode...")
-            img = decode_image(image)
+        raw = data.get("msg", "").strip()
+        image = data.get("image")
 
-            print("📏 resize...")
-            img = img.resize((224, 224))
-            img = img.convert("RGB")
+        print("MASUK CHAT:", raw)
 
-            print("🧠 generate caption...")
-            caption = get_image_caption(img)
+        # 🔥 TAMBAH BLOK INI
+        if image and isinstance(image, str) and image.startswith("data:image"):
+            try:
+                print("🔥 MASUK IMAGE MODE")
 
-            print("✅ caption jadi:", caption)
+                print("📦 decode...")
+                img = decode_image(image)
 
-            reply = f"Aku lihat ini 👀: {caption}"
-            print("📤 Kirim reply...", reply)
+                print("📏 resize...")
+                img = img.resize((224, 224))
+                img = img.convert("RGB")
 
-        except Exception as e:
-            print("❌ ERROR:", e)
-            reply = "Gambar gagal diproses 😭"
+                print("🧠 generate caption...")
+                caption = get_image_caption(img)
 
-        LAST_CHAT_TIME = time.time()
+                print("✅ caption jadi:", caption)
 
-        socketio.emit("reply", {"msg": reply}, to=sid)
+                reply = f"Aku lihat ini 👀: {caption}"
+                print("📤 Kirim reply...", reply)
 
-        socketio.sleep(0.1)
+            except Exception as e:
+                print("❌ ERROR:", e)
+                reply = "Gambar gagal diproses 😭"
 
-        send_serial("STATE:ANSWER")
-        socketio.sleep(0.05)
-        send_serial("STATE:DONE")
+            LAST_CHAT_TIME = time.time()
 
-        return
+            socketio.emit("reply", {"msg": reply}, to=sid)
 
-    low = raw.lower()
+            socketio.sleep(0.1)
 
-    # =========================
-    # 1️⃣ CHILD CHAT (PALING ATAS)
-    # =========================
-    child_reply = None
-
-    SHORT_TRIGGERS = ["hai", "halo", "hi", "helo"]
-
-    if any(k in low for k in SHORT_TRIGGERS):
-        child_reply = child_chat(raw)
-
-        if child_reply is not None:
-            emit("reply", {"msg": child_reply})
             send_serial("STATE:ANSWER")
             socketio.sleep(0.05)
             send_serial("STATE:DONE")
+
+            IS_PROCESSING = False
             return
-    # =========================
-    # 2️⃣ SIMPAN MEMORY
-    # =========================
-    if low.startswith("aku suka "):
-        item = raw[8:].strip()
-        remember("kesukaan_diva", item)
 
-        reply = f"Hehe 😆 FoxDynamiX inget ya… Diva suka **{item}** 🦊💛"
-        socketio.emit("reply", {"msg": reply})
-        send_serial("STATE:ANSWER")
-        socketio.sleep(0.1)
-        send_serial("STATE:DONE")
-        return
+        low = raw.lower()
 
-    # =========================
-    # 3️⃣ PANGGIL MEMORY
-    # =========================
-    if low in ("aku suka apa", "aku suka apa?"):
-        suka = recall("kesukaan_diva")
+        # =========================
+        # 1️⃣ CHILD CHAT (PALING ATAS)
+        # =========================
+        child_reply = None
 
-        if suka:
-            reply = f"Kalau nggak salah… Diva suka **{suka}** 😄🦊"
-        else:
-            reply = "Hmm 🤔 FoxDynamiX belum inget kamu suka apa…"
+        SHORT_TRIGGERS = ["hai", "halo", "hi", "helo"]
 
-        socketio.emit("reply", {"msg": reply})
-        send_serial("STATE:ANSWER")
-        socketio.sleep(0.1)
-        send_serial("STATE:DONE")
-        return
+        if any(k in low for k in SHORT_TRIGGERS):
+            child_reply = child_chat(raw)
 
-    # =========================
-    # NORMAL QUERY (WIKI / CUACA / DLL)
-    # =========================
-    low_norm = normalize_text(raw)
-    normalized = low_norm
-    topic = normalized
+            if child_reply is not None:
+                emit("reply", {"msg": child_reply})
+                send_serial("STATE:ANSWER")
+                socketio.sleep(0.05)
+                send_serial("STATE:DONE")
 
-    # ml_intent = predict_intent(normalized)
+                IS_PROCESSING = False
+                return
+        # =========================
+        # 2️⃣ SIMPAN MEMORY
+        # =========================
+        if low.startswith("aku suka "):
+            item = raw[8:].strip()
+            remember("kesukaan_diva", item)
 
-    ans = None
+            reply = f"Hehe 😆 FoxDynamiX inget ya… Diva suka **{item}** 🦊💛"
+            socketio.emit("reply", {"msg": reply})
+            send_serial("STATE:ANSWER")
+            socketio.sleep(0.1)
+            send_serial("STATE:DONE")
 
-    reply = ""  # 🔥 JAGA-JAGA BIAR PYTHON NGGAK NGAMUK
+            IS_PROCESSING = False
+            return
 
-    # 🔥 CEK DULU: apakah Tora sudah pernah jawab pertanyaan ini?
-    saved = recall_answer(normalize_text(normalized))
+        # =========================
+        # 3️⃣ PANGGIL MEMORY
+        # =========================
+        if low in ("aku suka apa", "aku suka apa?"):
+            suka = recall("kesukaan_diva")
 
-    if isinstance(saved, dict):  # 🔥 PENTING
-        answer_text = saved.get("answer", "")
-        source = saved.get("source", "")
-        url = saved.get("url", "")
-
-        reply = f"🦊 Dari ingatan FoxDynamiX:\n\n{answer_text}"
-
-        if source:
-            reply += f"\n\nSumber: {source}"
-        if url:
-            reply += f"\n{url}"
-
-        socketio.emit("reply", {"msg": reply})
-        send_serial("STATE:ANSWER")
-        socketio.sleep(0.1)
-        send_serial("STATE:DONE")
-        return
-
-    # ---- CUACA
-    loc = parse_weather_query(normalized)
-    if loc:
-        reply = get_weather_answer(loc)
-        if not reply:
-            reply = f"Div, FoxDynamiX belum nemu data cuaca buat '{loc}' 🦊"
-
-        socketio.emit("reply", {"msg": reply})
-        send_serial("STATE:ANSWER")
-        socketio.sleep(0.1)
-        send_serial("STATE:DONE")
-        return
-
-    # ---- CURRENCY ROUTING
-    if low_norm.startswith("mata uang"):
-
-        negara = low_norm.replace("mata uang", "").replace("uang", "").strip()
-        key = f"mata uang {negara}"
-
-        # 1️⃣ cek memory dulu
-        saved = recall_answer(normalize_text(key))
-        if saved:
-            reply = (
-                "🦊 Dari ingatan FoxDynamiX:\n\n"
-                f"{saved.get('answer','')}\n\n"
-                f"Sumber: {saved.get('source','')}\n"
-                f"{saved.get('url','')}"
-            )
+            if suka:
+                reply = f"Kalau nggak salah… Diva suka **{suka}** 😄🦊"
+            else:
+                reply = "Hmm 🤔 FoxDynamiX belum inget kamu suka apa…"
 
             socketio.emit("reply", {"msg": reply})
             send_serial("STATE:ANSWER")
-            socketio.sleep(0.05)
+            socketio.sleep(0.1)
             send_serial("STATE:DONE")
             return
 
-        # 2️⃣ cek CURRENCY_MAP (opsional cepat)
-        currency_name = CURRENCY_MAP.get(negara)
+        # =========================
+        # NORMAL QUERY (WIKI / CUACA / DLL)
+        # =========================
+        low_norm = normalize_text(raw)
+        normalized = low_norm
+        topic = normalized
 
-        if currency_name:
-            ans = wiki_summary_by_title(currency_name, "id") or wiki_summary_by_title(
-                currency_name, "en"
-            )
+        # ml_intent = predict_intent(normalized)
 
-        else:
-            # 3️⃣ 🔥 FALLBACK KE WIKIDATA (P38)
-            q_country = wd_search_entity(negara, "id") or wd_search_entity(negara, "en")
+        ans = None
 
-            if q_country:
-                currency_qids = wd_get_claim_target(q_country, "P38")
+        reply = ""  # 🔥 JAGA-JAGA BIAR PYTHON NGGAK NGAMUK
 
-                if currency_qids:
-                    currency_qid = currency_qids[-1]  # ambil terbaru
-                    currency_label = wd_label(currency_qid, "id") or wd_label(
-                        currency_qid, "en"
-                    )
+        # 🔥 CEK DULU: apakah Tora sudah pernah jawab pertanyaan ini?
+        saved = recall_answer(normalize_text(normalized))
 
-                    if currency_label:
-                        ans = wiki_summary_by_title(
-                            currency_label, "id"
-                        ) or wiki_summary_by_title(currency_label, "en")
+        if isinstance(saved, dict):  # 🔥 PENTING
+            answer_text = saved.get("answer", "")
+            source = saved.get("source", "")
+            url = saved.get("url", "")
 
+            reply = f"🦊 Dari ingatan FoxDynamiX:\n\n{answer_text}"
+
+            if source:
+                reply += f"\n\nSumber: {source}"
+            if url:
+                reply += f"\n{url}"
+
+            socketio.emit("reply", {"msg": reply})
+            send_serial("STATE:ANSWER")
+            socketio.sleep(0.1)
+            send_serial("STATE:DONE")
+            return
+
+        # ---- CUACA
+        loc = parse_weather_query(normalized)
+        if loc:
+            reply = get_weather_answer(loc)
+            if not reply:
+                reply = f"Div, FoxDynamiX belum nemu data cuaca buat '{loc}' 🦊"
+
+            socketio.emit("reply", {"msg": reply})
+            send_serial("STATE:ANSWER")
+            socketio.sleep(0.1)
+            send_serial("STATE:DONE")
+            return
+
+        # ---- CURRENCY ROUTING
+        if low_norm.startswith("mata uang"):
+
+            negara = low_norm.replace("mata uang", "").replace("uang", "").strip()
+            key = f"mata uang {negara}"
+
+            # 1️⃣ cek memory dulu
+            saved = recall_answer(normalize_text(key))
+            if saved:
+                reply = (
+                    "🦊 Dari ingatan FoxDynamiX:\n\n"
+                    f"{saved.get('answer','')}\n\n"
+                    f"Sumber: {saved.get('source','')}\n"
+                    f"{saved.get('url','')}"
+                )
+
+                socketio.emit("reply", {"msg": reply})
+                send_serial("STATE:ANSWER")
+                socketio.sleep(0.05)
+                send_serial("STATE:DONE")
+                return
+
+            # 2️⃣ cek CURRENCY_MAP (opsional cepat)
+            currency_name = CURRENCY_MAP.get(negara)
+
+            if currency_name:
+                ans = wiki_summary_by_title(
+                    currency_name, "id"
+                ) or wiki_summary_by_title(currency_name, "en")
+
+            else:
+                # 3️⃣ 🔥 FALLBACK KE WIKIDATA (P38)
+                q_country = wd_search_entity(negara, "id") or wd_search_entity(
+                    negara, "en"
+                )
+
+                if q_country:
+                    currency_qids = wd_get_claim_target(q_country, "P38")
+
+                    if currency_qids:
+                        currency_qid = currency_qids[-1]  # ambil terbaru
+                        currency_label = wd_label(currency_qid, "id") or wd_label(
+                            currency_qid, "en"
+                        )
+
+                        if currency_label:
+                            ans = wiki_summary_by_title(
+                                currency_label, "id"
+                            ) or wiki_summary_by_title(currency_label, "en")
+
+            if ans:
+                remember_answer(
+                    key,
+                    ans.get("summary", ""),
+                    ans.get("source", "Wikipedia"),
+                    ans.get("url", ""),
+                )
+
+                reply = format_answer_payload(ans, raw.title())
+            else:
+                reply = (
+                    f"FoxDynamiX belum nemu data mata uang untuk {negara.title()} 🦊"
+                )
+
+                socketio.emit("reply", {"msg": reply})
+                send_serial("STATE:ANSWER")
+                socketio.sleep(0.05)
+                send_serial("STATE:DONE")
+                return
+
+        # ---- KEYWORD MAP
+        if not ans and low_norm in KEYWORD_MAP:
+            ans = wiki_summary_by_title(KEYWORD_MAP[low_norm], "id")
+
+        # ---- INTENT
+        intent, entity = parse_intent(normalized)
+        # 🔥 CEK MEMORY INTENT SPESIFIK
+        if intent and entity:
+            intent_key = f"{intent} {entity}"
+
+            saved_intent = recall_answer(intent_key)
+            if saved_intent:
+                reply = (
+                    "🦊 Dari ingatan FoxDynamiX:\n\n"
+                    f"{saved_intent.get('answer','')}\n\n"
+                    f"Sumber: {saved_intent.get('source','')}\n"
+                    f"{saved_intent.get('url','')}"
+                )
+
+                socketio.emit("reply", {"msg": reply})
+                send_serial("STATE:ANSWER")
+                socketio.sleep(0.05)
+                send_serial("STATE:DONE")
+                return
+
+        if intent and entity:
+            ans = answer_by_intent(intent, entity)
+
+            if ans:
+                repeat_count = count_question_repeat(normalized)
+                is_same_as_last = normalized == LAST_QUESTION
+                LAST_QUESTION = normalized
+
+                remember_answer(
+                    f"{intent} {entity}",
+                    ans.get("summary", ""),
+                    ans.get("source", "Wikidata"),
+                    ans.get("url", ""),
+                )
+
+                emotion = emotion_prefix(repeat_count)
+                dejavu = deja_vu_prefix(is_same_as_last)
+                reply = dejavu + emotion + format_answer_payload(ans, raw.title())
+
+                socketio.emit("reply", {"msg": reply})
+                send_serial("STATE:ANSWER")
+                socketio.sleep(0.05)
+                send_serial("STATE:DONE")
+                return
+
+            else:
+                # 🔥 JANGAN PERNAH fallback web kalau intent jelas
+                reply = "FoxDynamiX nggak nemu data intentnya 🦊"
+                socketio.emit("reply", {"msg": reply})
+                send_serial("STATE:ANSWER")
+                socketio.sleep(0.05)
+                send_serial("STATE:DONE")
+                return
+
+        # ---- KENAPA
+        if not ans and raw.lower().startswith("kenapa"):
+            ans = smart_wiki_answer(f"mengapa {topic}")
+
+        # ---- GENERAL WIKI
+        if not ans:
+            ans = smart_wiki_answer(topic)
+
+        repeat_count = count_question_repeat(normalized)
+        is_same_as_last = normalized == LAST_QUESTION
+        LAST_QUESTION = normalized
+
+        # =========================
+        # FINAL REPLY
+        # =========================
         if ans:
             remember_answer(
-                key,
+                normalized,
                 ans.get("summary", ""),
-                ans.get("source", "Wikipedia"),
-                ans.get("url", ""),
-            )
-
-            reply = format_answer_payload(ans, raw.title())
-        else:
-            reply = f"FoxDynamiX belum nemu data mata uang untuk {negara.title()} 🦊"
-
-            socketio.emit("reply", {"msg": reply})
-            send_serial("STATE:ANSWER")
-            socketio.sleep(0.05)
-            send_serial("STATE:DONE")
-            return
-
-    # ---- KEYWORD MAP
-    if not ans and low_norm in KEYWORD_MAP:
-        ans = wiki_summary_by_title(KEYWORD_MAP[low_norm], "id")
-
-    # ---- INTENT
-    intent, entity = parse_intent(normalized)
-    # 🔥 CEK MEMORY INTENT SPESIFIK
-    if intent and entity:
-        intent_key = f"{intent} {entity}"
-
-        saved_intent = recall_answer(intent_key)
-        if saved_intent:
-            reply = (
-                "🦊 Dari ingatan FoxDynamiX:\n\n"
-                f"{saved_intent.get('answer','')}\n\n"
-                f"Sumber: {saved_intent.get('source','')}\n"
-                f"{saved_intent.get('url','')}"
-            )
-
-            socketio.emit("reply", {"msg": reply})
-            send_serial("STATE:ANSWER")
-            socketio.sleep(0.05)
-            send_serial("STATE:DONE")
-            return
-
-    if intent and entity:
-        ans = answer_by_intent(intent, entity)
-
-        if ans:
-            repeat_count = count_question_repeat(normalized)
-            is_same_as_last = normalized == LAST_QUESTION
-            LAST_QUESTION = normalized
-
-            remember_answer(
-                f"{intent} {entity}",
-                ans.get("summary", ""),
-                ans.get("source", "Wikidata"),
+                ans.get("source", "Web"),
                 ans.get("url", ""),
             )
 
             emotion = emotion_prefix(repeat_count)
             dejavu = deja_vu_prefix(is_same_as_last)
             reply = dejavu + emotion + format_answer_payload(ans, raw.title())
-
-            socketio.emit("reply", {"msg": reply})
-            send_serial("STATE:ANSWER")
-            socketio.sleep(0.05)
-            send_serial("STATE:DONE")
-            return
-
         else:
-            # 🔥 JANGAN PERNAH fallback web kalau intent jelas
-            reply = "FoxDynamiX nggak nemu data intentnya 🦊"
-            socketio.emit("reply", {"msg": reply})
-            send_serial("STATE:ANSWER")
-            socketio.sleep(0.05)
-            send_serial("STATE:DONE")
-            return
+            reply = "Maaf Div, FoxDynamiX belum nemu jawaban yang pas 🦊"
 
-    # ---- KENAPA
-    if not ans and raw.lower().startswith("kenapa"):
-        ans = smart_wiki_answer(f"mengapa {topic}")
+        socketio.emit("reply", {"msg": reply})
+        send_serial("STATE:ANSWER")
 
-    # ---- GENERAL WIKI
-    if not ans:
-        ans = smart_wiki_answer(topic)
+        # cari web di belakang layar
+        def update_from_web():
+            better = smart_web_answer(topic)
+            if better:
+                better_text = format_answer_payload(better, raw.title())
+                socketio.emit("reply", {"msg": "🔄 Update dari web:\n\n" + better_text})
 
-    repeat_count = count_question_repeat(normalized)
-    is_same_as_last = normalized == LAST_QUESTION
-    LAST_QUESTION = normalized
+        # threading.Thread(target=update_from_web, daemon=True).start()
 
-    # =========================
-    # FINAL REPLY
-    # =========================
-    if ans:
-        remember_answer(
-            normalized,
-            ans.get("summary", ""),
-            ans.get("source", "Web"),
-            ans.get("url", ""),
-        )
+        socketio.sleep(0.1)
+        send_serial("STATE:DONE")
 
-        emotion = emotion_prefix(repeat_count)
-        dejavu = deja_vu_prefix(is_same_as_last)
-        reply = dejavu + emotion + format_answer_payload(ans, raw.title())
-    else:
-        reply = "Maaf Div, FoxDynamiX belum nemu jawaban yang pas 🦊"
-
-    socketio.emit("reply", {"msg": reply})
-    send_serial("STATE:ANSWER")
-
-    # cari web di belakang layar
-    def update_from_web():
-        better = smart_web_answer(topic)
-        if better:
-            better_text = format_answer_payload(better, raw.title())
-            socketio.emit("reply", {"msg": "🔄 Update dari web:\n\n" + better_text})
-
-    # threading.Thread(target=update_from_web, daemon=True).start()
-
-    socketio.sleep(0.1)
-    send_serial("STATE:DONE")
+    finally:
+        IS_PROCESSING = False
 
 
 # =========================
