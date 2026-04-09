@@ -126,6 +126,31 @@ def translate_to_indonesia(text):
         "blooming": "mekar",
         "tree": "pohon",
         "middle": "tengah",
+        "view": "pemandangan",
+        "ocean": "laut",
+        "boat": "perahu",
+        "distance": "kejauhan",
+        "flower": "bunga",
+        "bouquet": "buket",
+        "pot": "pot",
+        "from": "dari",
+        "mountain": "gunung",
+        "range": "pegunungan",
+        "sky": "langit",
+        "background": "latar belakang",
+        "with": "dengan",
+        "from": "dari",
+        "elephant": "gajah",
+        "that": "",
+        "red": "merah",
+        "turtle": "kura-kura",
+        "tortoise": "kura-kura",
+        "branch": "ranting",
+        "tree": "pohon",
+        "ground": "tanah",
+        "laying": "berbaring",
+        "brown": "coklat",
+        "large": "besar",
     }
 
     text = re.sub(r"\b(the|a|an)\b", "", text)
@@ -194,7 +219,25 @@ def get_image_caption(image):
 
     # 🔥 translate
     caption_id = translate_to_indonesia(caption)
+
+    # 🔥 PRIORITAS DETEKSI OBJECT UTAMA
+    if "bear" in caption and "grass" in caption:
+        caption_id = "singa"
+    elif "elephant" in caption:
+        caption_id = "gajah"
+    elif "turtle" in caption or "tortoise" in caption:
+        caption_id = "kura-kura"
+    elif "bird" in caption:
+        caption_id = "burung"
+
+    caption_id = caption_id.strip()
+
+    # 🔥 FIX TEDDY BEAR NGACO
+    if "teddy bear" in caption:
+        caption_id = "boneka beruang"
+
     caption_id = " ".join(caption_id.split())
+    caption_id = fix_caption_natural(caption_id)
 
     # 🔥 BERSIHKAN SAMPAH
     caption_id = re.sub(r"\b(close|picture|image)\b", "", caption_id)
@@ -203,7 +246,7 @@ def get_image_caption(image):
     # 🔥 PRIORITAS OBJEK DI DEPAN
     words = caption_id.split()
 
-    priority = ["ikan", "kucing", "anjing", "burung"]
+    priority = ["singa", "gajah", "kura-kura", "ikan", "kucing", "anjing", "burung"]
 
     for p in priority:
         if p in words:
@@ -214,14 +257,22 @@ def get_image_caption(image):
     if not caption_id.strip():
         return "objek yang kurang jelas"
 
-    if len(caption.split()) < 2:
+    if len(caption_id.split()) < 2:
         return "objek yang sulit dikenali"
 
-    # 🔥 HANDLE JAMAK FINAL
-    if caption_id.startswith("dua "):
-        return caption_id.replace("dua ", "dua ekor ")
+    words = caption_id.split()
+    caption_id = " ".join(words[:8])  # max 6 kata
+
+    # 🔥 jangan berhenti di kata gantung
+    if caption_id.endswith("di"):
+        caption_id = " ".join(words[:10])
 
     hewan = ["kucing", "anjing", "burung", "ikan", "jerapah", "kura-kura", "gajah"]
+
+    # 🔥 FIX SALAH DETEKSI (burung → kura-kura)
+    if "burung" in caption_id:
+        if any(k in caption_id for k in ["batu", "tanah", "air"]):
+            caption_id = caption_id.replace("burung", "kura-kura")
 
     if caption_id.startswith("dua "):
         if any(h in caption_id for h in hewan):
@@ -231,8 +282,34 @@ def get_image_caption(image):
 
     if any(h in caption_id for h in hewan):
         return f"seekor {caption_id}"
-
+    
+    # 🔥 TAMBAH INI
     return f"sebuah {caption_id}"
+
+
+def fix_caption_natural(text):
+    # 🔥 rapihin frasa aneh
+    text = text.replace("di di", "di")
+    text = text.replace("di atas di", "di atas")
+    text = text.replace("di tengah di", "di tengah")
+
+    # 🔥 ganti frasa biar natural
+    text = text.replace("di distance", "dari kejauhan")
+    text = text.replace("from boat", "dari perahu")
+    text = text.replace("in field", "di lapangan")
+    text = text.replace("di grassy", "di rumput")
+    text = text.replace("dengan langit latar belakang", "dengan latar langit")
+    text = text.replace("pegunungan gunung", "pegunungan")
+    text = text.replace("duduk di ranting", "sedang bertengger di ranting")
+
+    # 🔥 hapus sisa english jelek
+    text = re.sub(r"\b(view|scene|image|photo)\b", "", text)
+    text = re.sub(r"\b(background|with)\b", "", text)
+    text = re.sub(r"\b(from|with)\b", "", text)
+    text = re.sub(r"\b(that|this)\b", "", text)
+
+    return " ".join(text.split())
+
 
 # =========================
 # ESP32 (opsional)
@@ -299,7 +376,12 @@ def idle_talk_loop():
         now = time.time()
         idle = now - LAST_CHAT_TIME
 
-        if not IS_PROCESSING and idle > IDLE_SECONDS and now - last_idle_sent > 30:
+        if (
+            not IS_PROCESSING
+            and current_mode == "idle"
+            and idle > IDLE_SECONDS
+            and now - last_idle_sent > 300
+        ):
             msg = random.choice(
                 [
                     "Div… kamu masih di situ kan? 🦊",
@@ -316,7 +398,7 @@ def idle_talk_loop():
 
             LAST_CHAT_TIME = now  # 🔥 INI KUNCINYA
 
-        time.sleep(30)
+        time.sleep(120)
 
 
 threading.Thread(target=serial_reader, daemon=True).start()
@@ -1125,7 +1207,7 @@ def on_chat_message(data):
                 img = img.convert("RGB")
 
                 print("🧠 generate caption...")
-                caption = get_image_caption(img)
+                caption = get_image_caption(img) or "objek tidak dikenali"
 
                 print("✅ caption jadi:", caption)
 
