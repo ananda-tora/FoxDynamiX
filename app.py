@@ -23,7 +23,7 @@ from serial.tools import list_ports
 
 from brain.memory import remember, recall, remember_answer, recall_answer
 
-from transformers import VisionEncoderDecoderModel, ViTImageProcessor, AutoTokenizer
+from transformers import BlipProcessor, BlipForConditionalGeneration
 from PIL import Image
 import base64
 import io
@@ -37,13 +37,11 @@ app = Flask(__name__, static_folder="static", template_folder="templates")
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 current_mode = "idle"
 
-# 🔥 TAMBAH DI SINI
-model = VisionEncoderDecoderModel.from_pretrained(
-    "nlpconnect/vit-gpt2-image-captioning"
+# 🔥 model vision
+processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+model = BlipForConditionalGeneration.from_pretrained(
+    "Salesforce/blip-image-captioning-base"
 )
-processor = ViTImageProcessor.from_pretrained("nlpconnect/vit-gpt2-image-captioning")
-tokenizer = AutoTokenizer.from_pretrained("nlpconnect/vit-gpt2-image-captioning")
-
 import torch
 
 model.eval()
@@ -94,8 +92,6 @@ def translate_to_indonesia(text):
         "white": "putih",
         "standing": "berdiri",
         "sitting": "duduk",
-        "on": "di",
-        "top": "atas",
         "fence": "pagar",
         "a": "",
         "of": "",
@@ -151,6 +147,18 @@ def translate_to_indonesia(text):
         "laying": "berbaring",
         "brown": "coklat",
         "large": "besar",
+        "sun": "matahari",
+        "sunflowers": "bunga matahari",
+        "walking": "berjalan",
+        "across": "melintasi",
+        "sitting": "duduk",
+        "standing": "berdiri",
+        "group": "kelompok",
+        "near": "dekat",
+        "beside": "di samping",
+        "next": "di sebelah",
+        "lying": "berbaring",
+        "on top of": "di atas",
     }
 
     text = re.sub(r"\b(the|a|an)\b", "", text)
@@ -178,18 +186,24 @@ def decode_image(base64_str):
 
 
 def get_image_caption(image):
-    pixel_values = processor(images=image, return_tensors="pt").pixel_values
+    inputs = processor(images=image, return_tensors="pt")
 
     with torch.no_grad():
         output_ids = model.generate(
-            pixel_values,
+            **inputs,
             max_length=20,
-            num_beams=5,  # 🔥 INI PENTING
+            num_beams=5,
             no_repeat_ngram_size=2,
             early_stopping=True,
         )
 
-    caption = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+    caption = processor.decode(output_ids[0], skip_special_tokens=True)
+
+    # 🔥 FIX TYPO / POTONGAN MODEL
+    caption = caption.replace("tor ", "tortoise ")
+    caption = caption.replace(" tor", " tortoise")
+
+    print("RAW CAPTION:", caption)  # 🔥 TAMBAH INI
 
     caption = caption.lower().strip()
 
@@ -217,24 +231,36 @@ def get_image_caption(image):
     # 🔥 rapihin spasi
     caption = " ".join(caption.split())
 
-    # 🔥 translate
-    caption_id = translate_to_indonesia(caption)
+    # 🔥 DETEKSI DULU
+    caption_id = ""
 
-    # 🔥 PRIORITAS DETEKSI OBJECT UTAMA
-    if "bear" in caption and "grass" in caption:
-        caption_id = "singa"
-    elif "elephant" in caption:
+    if "elephant" in caption:
         caption_id = "gajah"
     elif "turtle" in caption or "tortoise" in caption:
         caption_id = "kura-kura"
     elif "bird" in caption:
         caption_id = "burung"
 
+    # 🔥 FIX: bird tapi sebenarnya kura-kura
+    if "bird" in caption and any(k in caption for k in ["shell", "turtle", "rock"]):
+        caption_id = "kura-kura"
+
+    # 🔥 KALAU NGGAK KEDETEK → BARU TRANSLATE
+    if not caption_id:
+        caption_id = translate_to_indonesia(caption)
+
     caption_id = caption_id.strip()
 
-    # 🔥 FIX TEDDY BEAR NGACO
-    if "teddy bear" in caption:
+    if "teddy bear" in caption and not any(
+        k in caption for k in ["shell", "turtle", "rock"]
+    ):
         caption_id = "boneka beruang"
+
+    if "shell" in caption:
+        caption_id = "kura-kura"
+
+    if "tortoise" in caption:
+        caption_id = "kura-kura"
 
     caption_id = " ".join(caption_id.split())
     caption_id = fix_caption_natural(caption_id)
@@ -257,8 +283,12 @@ def get_image_caption(image):
     if not caption_id.strip():
         return "objek yang kurang jelas"
 
-    if len(caption_id.split()) < 2:
-        return "objek yang sulit dikenali"
+    # 🔥 kalau cuma 1 kata, coba pakai caption asli
+    if len(caption_id.split()) < 2 and not any(
+        h in caption_id
+        for h in ["kucing", "anjing", "burung", "ikan", "kura-kura", "gajah"]
+    ):
+        caption_id = translate_to_indonesia(caption)
 
     words = caption_id.split()
     caption_id = " ".join(words[:8])  # max 6 kata
@@ -268,11 +298,11 @@ def get_image_caption(image):
         caption_id = " ".join(words[:10])
 
     hewan = ["kucing", "anjing", "burung", "ikan", "jerapah", "kura-kura", "gajah"]
+    scene_keywords = ["sungai", "laut", "langit", "gunung", "air", "pemandangan"]
 
-    # 🔥 FIX SALAH DETEKSI (burung → kura-kura)
-    if "burung" in caption_id:
-        if any(k in caption_id for k in ["batu", "tanah", "air"]):
-            caption_id = caption_id.replace("burung", "kura-kura")
+    # 🔥 FIX khusus kura-kura (bukan semua burung!)
+    if "shell" in caption and "kura-kura" not in caption_id:
+        caption_id = "kura-kura"
 
     if caption_id.startswith("dua "):
         if any(h in caption_id for h in hewan):
@@ -280,9 +310,11 @@ def get_image_caption(image):
         else:
             return caption_id.replace("dua ", "dua buah ")
 
-    if any(h in caption_id for h in hewan):
+    if any(h in caption_id for h in hewan) and not any(
+        k in caption_id for k in scene_keywords
+    ):
         return f"seekor {caption_id}"
-    
+
     # 🔥 TAMBAH INI
     return f"sebuah {caption_id}"
 
@@ -301,12 +333,27 @@ def fix_caption_natural(text):
     text = text.replace("dengan langit latar belakang", "dengan latar langit")
     text = text.replace("pegunungan gunung", "pegunungan")
     text = text.replace("duduk di ranting", "sedang bertengger di ranting")
+    text = text.replace("berjalan melintasi", "sedang berjalan di")
+    text = text.replace("duduk di atas", "sedang duduk di atas")
+    text = text.replace("berdiri di", "sedang berdiri di")
 
     # 🔥 hapus sisa english jelek
     text = re.sub(r"\b(view|scene|image|photo)\b", "", text)
     text = re.sub(r"\b(background|with)\b", "", text)
     text = re.sub(r"\b(from|with)\b", "", text)
     text = re.sub(r"\b(that|this)\b", "", text)
+    text = re.sub(r"\b[a-z]{3,}\b", "", text)
+    text = " ".join(text.split())
+
+    # 🔥 RAPIIIN STRUKTUR
+    text = re.sub(r"jarak dekat (.+)", r"\1 jarak dekat", text)
+    text = re.sub(r"pemandangan (.+)", r"\1", text)
+    text = re.sub(r"\b(hitam|putih|kuning|coklat|merah) (\w+)", r"\2 \1", text)
+    text = re.sub(r"\b(seekor) (\w+) (\w+)", r"\1 \2 \3", text)
+
+    # 🔥 PRIORITAS OBJEK VISUAL
+    text = text.replace("pemandangan kuning bunga", "bunga kuning")
+    text = text.replace("jarak dekat bunga", "bunga jarak dekat")
 
     return " ".join(text.split())
 
