@@ -148,6 +148,7 @@ def translate_to_indonesia(text):
         "brown": "coklat",
         "large": "besar",
         "sun": "matahari",
+        "sunflower": "bunga matahari",
         "sunflowers": "bunga matahari",
         "walking": "berjalan",
         "across": "melintasi",
@@ -159,6 +160,59 @@ def translate_to_indonesia(text):
         "next": "di sebelah",
         "lying": "berbaring",
         "on top of": "di atas",
+        "clown": "badut",
+        "fish": "ikan",
+        "swimming": "berenang",
+        "swim": "berenang",
+        "aquarium": "akuarium",
+        "lion": "singa",
+        "machine": "mesin",
+        "equipment": "alat",
+        "plastic": "plastik",
+        "recycling": "daur ulang",
+        "sea": "laut",
+        "water": "air",
+        "river": "sungai",
+        "sky": "langit",
+        "cloud": "awan",
+        "mountain": "gunung",
+        "beach": "pantai",
+        "sand": "pasir",
+        "people": "orang",
+        "group": "kelompok",
+        "riding": "mengendarai",
+        "bike": "sepeda",
+        "bikes": "sepeda",
+        "path": "jalan",
+        "road": "jalan",
+        "couple": "dua",
+        "small": "kecil",
+        "orange": "oranye",
+        "kitten": "anak kucing",
+        "cat": "kucing",
+        "sitting": "duduk",
+        "on": "di",
+        "ledge": "pinggir",
+        "children": "anak-anak",
+        "desk": "meja",
+        "desks": "meja",
+        "at": "di",
+        "children": "anak-anak",
+        "group of": "sekelompok",
+        "a group of": "sekelompok",
+        "mountain": "gunung",
+        "mountains": "gunung",
+        "hill": "bukit",
+        "top": "puncak",
+        "view": "pemandangan",
+        "tea": "kebun teh",
+        "plantation": "perkebunan",
+        "sunset": "matahari terbenam",
+        "painting": "lukisan",
+        "waterfall": "air terjun",
+        "leaves": "daun",
+        "leaf": "daun",
+        "green": "hijau",
     }
 
     text = re.sub(r"\b(the|a|an)\b", "", text)
@@ -219,6 +273,14 @@ def get_image_caption(image):
         "stnding": "standing",
         "brd": "bird",
         "fce": "face",
+        "gifes": "giraffes",
+        "gife": "giraffe",
+        "giraf": "giraffe",
+        "girafe": "giraffe",
+        "giraffetes": "giraffes",
+        "girafetes": "giraffes",
+        "giraffess": "giraffes",
+        "giraffetes": "giraffe",
     }
 
     for wrong, correct in fix_map.items():
@@ -231,8 +293,36 @@ def get_image_caption(image):
     # 🔥 rapihin spasi
     caption = " ".join(caption.split())
 
+    # 🔥 CLASSIFIER SEDERHANA (WAJIB)
+    def detect_object(caption):
+        if "cat" in caption or "kitten" in caption:
+            return "kucing"
+        if "dog" in caption:
+            return "anjing"
+        if "giraffe" in caption:
+            return "jerapah"
+        if "elephant" in caption:
+            return "gajah"
+        if "turtle" in caption or "tortoise" in caption:
+            return "kura-kura"
+        if "bird" in caption:
+            return "burung"
+        if "mountain" in caption or "hill" in caption:
+            return "gunung"
+        return None
+
     # 🔥 DETEKSI DULU
     caption_id = ""
+
+    # 🔥 PANGGIL CLASSIFIER
+    label = detect_object(caption)
+
+    if label:
+        caption_id = label
+
+    # 🔥 TAMBAHAN (WAJIB)
+    if any(k in caption for k in ["machine", "engine", "equipment"]):
+        caption_id = "mesin"
 
     if "elephant" in caption:
         caption_id = "gajah"
@@ -248,6 +338,10 @@ def get_image_caption(image):
     # 🔥 KALAU NGGAK KEDETEK → BARU TRANSLATE
     if not caption_id:
         caption_id = translate_to_indonesia(caption)
+
+    # 🔥 scene detection tambahan
+    if any(k in caption for k in ["mountain", "hill", "valley"]):
+        caption_id = "pemandangan gunung"
 
     caption_id = caption_id.strip()
 
@@ -281,7 +375,7 @@ def get_image_caption(image):
             break
 
     if not caption_id.strip():
-        return "objek yang kurang jelas"
+        caption_id = translate_to_indonesia(caption)
 
     # 🔥 kalau cuma 1 kata, coba pakai caption asli
     if len(caption_id.split()) < 2 and not any(
@@ -291,11 +385,11 @@ def get_image_caption(image):
         caption_id = translate_to_indonesia(caption)
 
     words = caption_id.split()
-    caption_id = " ".join(words[:8])  # max 6 kata
+    caption_id = " ".join(words[:10])
 
     # 🔥 jangan berhenti di kata gantung
     if caption_id.endswith("di"):
-        caption_id = " ".join(words[:10])
+        caption_id = " ".join(words[:-1])
 
     hewan = ["kucing", "anjing", "burung", "ikan", "jerapah", "kura-kura", "gajah"]
     scene_keywords = ["sungai", "laut", "langit", "gunung", "air", "pemandangan"]
@@ -304,19 +398,69 @@ def get_image_caption(image):
     if "shell" in caption and "kura-kura" not in caption_id:
         caption_id = "kura-kura"
 
+    if caption_id.startswith("dua ") and any(h in caption_id for h in hewan):
+        return caption_id.replace("dua ", "dua ekor ")
+
+    hewan = [
+        "kucing",
+        "anjing",
+        "burung",
+        "ikan",
+        "jerapah",
+        "kura-kura",
+        "gajah",
+        "singa",
+    ]
+
+    benda = ["mesin", "alat", "perahu", "buket", "pot", "pohon"]
+
+    # 🔥 FIX: jangan ada "sebuah dua ..."
     if caption_id.startswith("dua "):
-        if any(h in caption_id for h in hewan):
-            return caption_id.replace("dua ", "dua ekor ")
-        else:
-            return caption_id.replace("dua ", "dua buah ")
+        return caption_id
 
-    if any(h in caption_id for h in hewan) and not any(
-        k in caption_id for k in scene_keywords
-    ):
-        return f"seekor {caption_id}"
+    if any(h in caption_id for h in hewan):
+        final = f"seekor {caption_id}"
+        return build_description(final)
 
-    # 🔥 TAMBAH INI
-    return f"sebuah {caption_id}"
+    if any(b in caption_id for b in benda):
+        final = f"sebuah {caption_id}"
+        return build_description(final)
+
+    final = f"sebuah {caption_id}"
+    return build_description(final)
+
+
+def build_description(text):
+    if "kucing" in text:
+        text += ", terlihat santai di sekitar"
+
+    if "gunung" in text:
+        if "pemandangan" not in text:
+            text = text.replace("gunung", "pemandangan gunung")
+        text += ", dengan suasana alam yang luas dan segar"
+
+    if "anak-anak" in text:
+        text += ", tampak sedang beraktivitas bersama"
+
+    if "laut" in text or "pantai" in text:
+        text += ", dengan suasana terbuka dan tenang"
+
+    if "burung" in text:
+        text += ", sedang bertengger atau bergerak di alam"
+
+    if "kebun teh" in text:
+        text += ", dengan pemandangan alam yang hijau dan menenangkan"
+
+    if "air terjun" in text:
+        text += ", dengan aliran air yang jernih dan menyegarkan"
+
+    if "bunga matahari" in text:
+        text += ", dengan warna kuning cerah yang indah"
+
+    if "mawar" in text:
+        text += ", terlihat indah dan segar"
+
+    return text
 
 
 def fix_caption_natural(text):
@@ -336,24 +480,99 @@ def fix_caption_natural(text):
     text = text.replace("berjalan melintasi", "sedang berjalan di")
     text = text.replace("duduk di atas", "sedang duduk di atas")
     text = text.replace("berdiri di", "sedang berdiri di")
+    text = text.replace("berenang di", "sedang berenang di")
+    text = text.replace("mesin plastik", "mesin pencacah plastik")
+    text = text.replace("sebuah kelompok", "sekelompok")
+    text = text.replace("dua jerapah", "dua ekor jerapah")
+    text = text.replace("kucing kecil oranye anak", "anak kucing kecil oranye")
+    text = text.replace("kebun teh perkebunan", "perkebunan teh")
 
     # 🔥 hapus sisa english jelek
     text = re.sub(r"\b(view|scene|image|photo)\b", "", text)
     text = re.sub(r"\b(background|with)\b", "", text)
     text = re.sub(r"\b(from|with)\b", "", text)
     text = re.sub(r"\b(that|this)\b", "", text)
-    text = re.sub(r"\b[a-z]{3,}\b", "", text)
+    text = re.sub(
+        r"\b(view|scene|image|photo|background|with|from|that|this)\b", "", text
+    )
+    text = " ".join(text.split())
+
+    # 🔥 hapus english sisa (lebih aman)
+    allowed = [
+        "kucing",
+        "anjing",
+        "ikan",
+        "burung",
+        "kura-kura",
+        "gajah",
+        "singa",
+        "jerapah",
+        "bunga",
+        "rumput",
+        "langit",
+        "laut",
+        "gunung",
+        "akuarium",
+        "pagar",
+        "lapangan",
+        "pohon",
+        "air",
+        "berdiri",
+        "duduk",
+        "berjalan",
+        "berenang",
+        "melintasi",
+        "dekat",
+        "anak",
+        "kecil",
+        "oranye",
+        "pinggir",
+        "dua",
+        "ekor",
+        "sedang",
+        "di",
+        "anak-anak",
+        "meja",
+        "jalan",
+        "orang",
+        "kelompok",
+        "mawar",
+        "daun",
+        "bunga",
+        "matahari",
+        "hijau",
+        "merah",
+        "kuning",
+        "coklat",
+        "hitam",
+        "putih",
+    ]
+
+    words = text.split()
+
+    words = [w for w in words if w not in ["the", "a", "an", "of"]]
+
+    # 🔥 HAPUS SISA INGGRIS PANJANG
+    words = [w for w in words if w in allowed or len(w) <= 3]
+
+    words = [w for w in words if w != "it"]
+
+    text = " ".join(words)
     text = " ".join(text.split())
 
     # 🔥 RAPIIIN STRUKTUR
     text = re.sub(r"jarak dekat (.+)", r"\1 jarak dekat", text)
-    text = re.sub(r"pemandangan (.+)", r"\1", text)
     text = re.sub(r"\b(hitam|putih|kuning|coklat|merah) (\w+)", r"\2 \1", text)
     text = re.sub(r"\b(seekor) (\w+) (\w+)", r"\1 \2 \3", text)
 
     # 🔥 PRIORITAS OBJEK VISUAL
     text = text.replace("pemandangan kuning bunga", "bunga kuning")
     text = text.replace("jarak dekat bunga", "bunga jarak dekat")
+    text = text.replace("ikan badut", "ikan badut")  # jaga urutan
+    text = text.replace("badut ikan", "ikan badut")
+    text = text.replace("kucing kecil oranye anak", "anak kucing kecil oranye")
+    text = text.replace("kelompok anak-anak", "sekelompok anak-anak")
+    text = text.replace("lapangan bunga", "ladang bunga")
 
     return " ".join(text.split())
 
