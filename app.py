@@ -276,7 +276,7 @@ def get_image_caption(image):
 
         if any(k in caption for k in ["sitting"]):
             activities.append("sedang duduk")
-        
+
         if any(k in caption for k in ["reading", "book"]):
             activities.append("sedang membaca")
 
@@ -295,8 +295,16 @@ def get_image_caption(image):
         if any(k in caption for k in ["talking", "chatting"]):
             activities.append("sedang berbicara")
 
+        # 🔥 taruh ini DI ATAS sebelum if activities
+        if "cleaning" in caption:
+            if "floor" in caption:
+                activities = ["sedang membersihkan lantai"]
+            else:
+                activities.append("sedang membersihkan")
+
+        # baru ini
         if activities:
-            activities = list(dict.fromkeys(activities))  # 🔥 HAPUS DUPLIKAT
+            activities = list(dict.fromkeys(activities))
 
             if len(activities) >= 2:
                 return activities[0] + " sambil " + activities[1]
@@ -339,22 +347,28 @@ def get_image_caption(image):
 
     # 🔥 CLASSIFIER SEDERHANA (WAJIB)
     def detect_object(caption):
+
+        # 🔥 PRIORITAS: GROUP / JAMAK
+        if "group" in caption and ("turtle" in caption or "tortoise" in caption):
+            return "sekelompok kura-kura"
+        if "turtles" in caption or "tortoises" in caption:
+            return "sekelompok kura-kura"
+        
+
         if "waterfall" in caption:
             return "air terjun"
         if "cat" in caption or "kitten" in caption:
             return "kucing"
         if "dog" in caption:
             return "anjing"
-        
+
         if any(k in caption for k in ["woman", "man", "girl", "boy"]):
             return "orang"
-        
+
         if "giraffe" in caption:
             return "jerapah"
         if "elephant" in caption:
-            return "gajah"
-        if "turtle" in caption or "tortoise" in caption:
-            return "kura-kura"
+            return "gajah"               
         if "bird" in caption:
             return "burung"
         if "mountain" in caption or "hill" in caption:
@@ -366,9 +380,7 @@ def get_image_caption(image):
         if "family" in caption:
             return "sekelompok orang"
         if "people" in caption or "person" in caption:
-            return "orang"
-        if "floor" in caption:
-            return "sedang membersihkan lantai"
+            return "orang"     
         return None
 
     # 🔥 DETEKSI DULU
@@ -377,6 +389,24 @@ def get_image_caption(image):
     # 🔥 PANGGIL CLASSIFIER
     label = detect_object(caption)
     activity = detect_activity(caption)
+
+    def detect_color(caption):
+        colors = []
+
+        if "black" in caption:
+            colors.append("hitam")
+        if "white" in caption:
+            colors.append("putih")
+        if "brown" in caption:
+            colors.append("coklat")
+        if "orange" in caption:
+            colors.append("oranye")
+        if "yellow" in caption:
+            colors.append("kuning")
+
+        return " ".join(colors) if colors else None
+
+    color = detect_color(caption)
 
     # 🔥 TAMBAH LOKASI
     location = None
@@ -391,15 +421,15 @@ def get_image_caption(image):
         if "waterfall" not in caption:
             location = "di air"
 
-    if label:
-        caption_id = label
-
     parts = []
+
+    if label and color:
+        parts.append(f"{label} {color}")
+    elif label:
+        parts.append(label)
 
     if activity:
         parts.append(activity)
-    elif label:
-        parts.append(label)
 
     if location:
         parts.append(location)
@@ -425,10 +455,7 @@ def get_image_caption(image):
     if not caption_id:
         caption_id = translate_to_indonesia(caption)
 
-    if caption_id.startswith("sedang"):
-        caption_id = "objek " + caption_id
-
-    # 🔥 scene detection tambahan
+        # 🔥 scene detection tambahan
     if any(k in caption for k in ["mountain", "hill", "valley"]) and not caption_id:
         caption_id = "pemandangan gunung"
 
@@ -466,10 +493,7 @@ def get_image_caption(image):
     if not caption_id.strip():
         caption_id = translate_to_indonesia(caption)
 
-    if caption_id.startswith("sedang"):
-        caption_id = "objek " + caption_id
-
-    # 🔥 kalau cuma 1 kata, coba pakai caption asli
+        # 🔥 kalau cuma 1 kata, coba pakai caption asli
     if len(caption_id.split()) < 2 and not any(
         h in caption_id
         for h in ["kucing", "anjing", "burung", "ikan", "kura-kura", "gajah"]
@@ -514,7 +538,7 @@ def get_image_caption(image):
     if "kelompok" in caption_id and "orang" not in caption_id:
         caption_id = "sekelompok orang " + caption_id.replace("kelompok", "").strip()
 
-    # 🔥 PRIORITAS: KELOMPOK DULU
+        # 🔥 ORANG DULU
     if "kelompok orang" in caption_id or "sekelompok orang" in caption_id:
         caption_id = caption_id.replace("kelompok orang", "sekelompok orang")
         final = caption_id
@@ -529,10 +553,10 @@ def get_image_caption(image):
             final = f"seorang yang {isi}"
 
         final = final.replace("yang yang", "yang")
-
         return build_description(final)
 
-    if any(h in caption_id for h in hewan):
+    # 🔥 baru hewan
+    if any(h in caption_id for h in hewan) and "sekelompok" not in caption_id:
         final = f"seekor {caption_id}"
         return build_description(final)
 
@@ -540,8 +564,8 @@ def get_image_caption(image):
         final = f"sebuah {caption_id}"
         return build_description(final)
 
-    final = f"sebuah {caption_id}"
-    return build_description(final)
+    # fallback terakhir
+    return build_description(caption_id)
 
 
 def build_description(text):
@@ -584,8 +608,12 @@ def fix_caption_natural(text):
     text = text.replace("sedang sedang", "sedang")
     text = text.replace("yang yang", "yang")
     text = text.replace("sedang duduk dan sedang membaca", "sedang duduk sambil membaca")
-    text = text.replace("sedang membaca dan sedang duduk", "sedang duduk sambil membaca")   
-    
+    text = text.replace("sedang membaca dan sedang duduk", "sedang duduk sambil membaca")
+    text = text.replace("sebuah objek", "")
+    text = text.replace("objek ", "")
+    text = text.replace("sambil sedang", "sambil")
+    text = text.replace("sedang membersihkan lantai", "sedang membersihkan lantai")
+
     # 🔥 hapus sisa english jelek
     text = re.sub(r"\b(view|scene|image|photo)\b", "", text)
     text = re.sub(r"\b(background|with)\b", "", text)
@@ -649,6 +677,10 @@ def fix_caption_natural(text):
         "makanan",
         "meja",
         "bersama",
+        "membersihkan",
+        "mengendarai",
+        "berbicara",
+        "bermain",
     ]
 
     words = text.split()
