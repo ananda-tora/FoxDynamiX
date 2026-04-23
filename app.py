@@ -348,12 +348,16 @@ def get_image_caption(image):
     # 🔥 CLASSIFIER SEDERHANA (WAJIB)
     def detect_object(caption):
 
-        # 🔥 PRIORITAS: GROUP / JAMAK
+        # 🔥 PALING ATAS (WAJIB)
         if "group" in caption and ("turtle" in caption or "tortoise" in caption):
             return "sekelompok kura-kura"
+
         if "turtles" in caption or "tortoises" in caption:
             return "sekelompok kura-kura"
-        
+
+        # baru ini
+        if "turtle" in caption or "tortoise" in caption:
+            return "kura-kura"    
 
         if "waterfall" in caption:
             return "air terjun"
@@ -436,19 +440,20 @@ def get_image_caption(image):
 
     caption_id = " ".join(parts)
 
-    # 🔥 TAMBAHAN (WAJIB)
     if any(k in caption for k in ["machine", "engine", "equipment"]):
         caption_id = "mesin"
 
-    if "elephant" in caption:
-        caption_id = "gajah"
-    elif "turtle" in caption or "tortoise" in caption:
-        caption_id = "kura-kura"
-    elif "bird" in caption:
-        caption_id = "burung"
+    # ❗ JANGAN TIMPA kalau sudah ada hasil
+    if not caption_id:
+        if "elephant" in caption:
+            caption_id = "gajah"
+        elif "turtle" in caption or "tortoise" in caption:
+            caption_id = "kura-kura"
+        elif "bird" in caption:
+            caption_id = "burung"
 
     # 🔥 FIX: bird tapi sebenarnya kura-kura
-    if "bird" in caption and any(k in caption for k in ["shell", "turtle", "rock"]):
+    if "bird" in caption and any(k in caption for k in ["shell", "turtle", "rock"]) and not caption_id:
         caption_id = "kura-kura"
 
     # 🔥 KALAU NGGAK KEDETEK → BARU TRANSLATE
@@ -466,10 +471,10 @@ def get_image_caption(image):
     ):
         caption_id = "boneka beruang"
 
-    if "shell" in caption:
+    if "shell" in caption and not caption_id:
         caption_id = "kura-kura"
 
-    if "tortoise" in caption:
+    if "tortoise" in caption and not caption_id:
         caption_id = "kura-kura"
 
     caption_id = " ".join(caption_id.split())
@@ -479,16 +484,20 @@ def get_image_caption(image):
     caption_id = re.sub(r"\b(close|picture|image)\b", "", caption_id)
     caption_id = " ".join(caption_id.split())
 
-    # 🔥 PRIORITAS OBJEK DI DEPAN
+    # 🔥 PRIORITAS OBJEK DI DEPAN (TAPI JANGAN RUSAK KELOMPOK)
     words = caption_id.split()
 
     priority = ["singa", "gajah", "kura-kura", "ikan", "kucing", "anjing", "burung"]
 
-    for p in priority:
-        if p in words:
-            words.remove(p)
-            caption_id = p + " " + " ".join(words)
-            break
+    # ❌ skip kalau ada "sekelompok"
+    if "sekelompok" not in caption_id:
+        for p in priority:
+            if p in words:
+                words.remove(p)
+                caption_id = p + " " + " ".join(words)
+                break    
+
+    caption_id = caption_id.replace("kura-kura sekelompok", "sekelompok kura-kura")
 
     if not caption_id.strip():
         caption_id = translate_to_indonesia(caption)
@@ -535,7 +544,7 @@ def get_image_caption(image):
         return caption_id
 
     # 🔥 FIX: kalau ada "kelompok" tapi gak ada "orang"
-    if "kelompok" in caption_id and "orang" not in caption_id:
+    if "kelompok" in caption_id and "orang" not in caption_id and not any(h in caption_id for h in hewan):
         caption_id = "sekelompok orang " + caption_id.replace("kelompok", "").strip()
 
         # 🔥 ORANG DULU
