@@ -28,6 +28,8 @@ from PIL import Image
 import base64
 import io
 
+from sympy import symbols, Eq, solve, sympify
+
 # =========================
 # Boot & Config
 # =========================
@@ -1603,7 +1605,62 @@ def on_chat_message(data):
         raw = data.get("msg", "").strip()
         image = data.get("image")
 
+        # =========================
+        # 🔥 MATH ENGINE (WAJIB DI ATAS)
+        # =========================
+        math_result = None
+        text_math = raw.strip()
+
+        # =================
+        # 1️⃣ PERSAMAAN
+        # =================
+        if "=" in text_math and text_math.count("=") == 1 and re.search(r'[a-zA-Z]', text_math) and re.search(r'\d', text_math):
+            try:
+                x = symbols('x')
+                text_eq = text_math
+                text_eq = re.sub(r'(\d)x', r'\1*x', text_eq)
+                text_eq = text_eq.replace("^", "**")
+
+                left, right = text_eq.split("=")
+                eq = Eq(sympify(left), sympify(right))
+                result = solve(eq, x)
+
+                if result:
+                    math_result = f"Hasilnya: x = {result[0]}"
+                else:
+                    math_result = "Tidak ada solusi"
+            except:
+                pass
+
+        # =================
+        # 2️⃣ HITUNG BIASA
+        # =================
+        if not math_result and re.fullmatch(r'[\d\s\+\-\*\/\.\^\(\)=]+', text_math) and re.search(r'\d', text_math):
+                try:
+                    text_eval = text_math
+
+                    if text_eval.endswith("="):
+                        text_eval = text_eval[:-1]
+
+                    text_eval = text_eval.replace("^", "**")
+
+                    result = sympify(text_eval)
+                    math_result = f"Hasilnya: {result}"
+
+                except Exception:
+                    math_result = None
+
+        # kalau ketemu hasil → langsung kirim
+        if math_result:
+            socketio.emit("reply", {"msg": math_result})
+            send_serial("STATE:ANSWER")
+            socketio.sleep(0.1)
+            send_serial("STATE:DONE")
+            return
+        
+        # kalau tidak ada math
         print("MASUK CHAT:", raw)
+        # LANJUT KE FLOW NORMAL (JANGAN RETURN DI SINI)
 
         # 🔥 TAMBAH BLOK INI
         if image and isinstance(image, str) and image.startswith("data:image"):
@@ -1927,7 +1984,6 @@ def on_chat_message(data):
 
     finally:
         IS_PROCESSING = False
-
 
 # =========================
 # Main
