@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 from brain.ml_intent import predict_intent
 import os
 import re
@@ -36,16 +39,17 @@ from sympy import symbols, Eq, solve, sympify
 load_dotenv()
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+socketio = SocketIO(app, async_mode='eventlet')
 current_mode = "idle"
 
-# 🔥 model vision
-processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-model = BlipForConditionalGeneration.from_pretrained(
-    "Salesforce/blip-image-captioning-base"
-)
+processor = None
+model = None
+
 import torch
 
+print("🔥 preload model...")
+processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
 model.eval()
 
 # =========================
@@ -249,16 +253,11 @@ def decode_image(base64_str):
 
 
 def get_image_caption(image):
+    global processor, model   # 🔥 TAMBAH INI
+
     inputs = processor(images=image, return_tensors="pt")
 
-    with torch.no_grad():
-        output_ids = model.generate(
-            **inputs,
-            max_length=20,
-            num_beams=5,
-            no_repeat_ngram_size=2,
-            early_stopping=True,
-        )
+    output_ids = model.generate(**inputs)
 
     caption = processor.decode(output_ids[0], skip_special_tokens=True)
 
@@ -1653,7 +1652,7 @@ def on_chat_message(data):
 
         # kalau ketemu hasil → langsung kirim
         if math_result:
-            socketio.emit("reply", {"msg": math_result})
+            socketio.emit("reply", {"msg": math_result}, to=sid)
             print("MASUK MATH:", text_math, "=>", math_result)
             
             send_serial("STATE:ANSWER")
@@ -1725,7 +1724,7 @@ def on_chat_message(data):
             child_reply = child_chat(raw)
 
             if child_reply is not None:
-                emit("reply", {"msg": child_reply})
+                socketio.emit("reply", {"msg": child_reply}, to=sid)
                 send_serial("STATE:ANSWER")
                 socketio.sleep(0.05)
                 send_serial("STATE:DONE")
@@ -1740,7 +1739,7 @@ def on_chat_message(data):
             remember("kesukaan_diva", item)
 
             reply = f"Hehe 😆 FoxDynamiX inget ya… Diva suka **{item}** 🦊💛"
-            socketio.emit("reply", {"msg": reply})
+            socketio.emit("reply", {"msg": reply}, to=sid)
             send_serial("STATE:ANSWER")
             socketio.sleep(0.1)
             send_serial("STATE:DONE")
@@ -1759,7 +1758,7 @@ def on_chat_message(data):
             else:
                 reply = "Hmm 🤔 FoxDynamiX belum inget kamu suka apa…"
 
-            socketio.emit("reply", {"msg": reply})
+            socketio.emit("reply", {"msg": reply}, to=sid)
             send_serial("STATE:ANSWER")
             socketio.sleep(0.1)
             send_serial("STATE:DONE")
@@ -1793,7 +1792,7 @@ def on_chat_message(data):
             if url:
                 reply += f"\n{url}"
 
-            socketio.emit("reply", {"msg": reply})
+            socketio.emit("reply", {"msg": reply}, to=sid)
             send_serial("STATE:ANSWER")
             socketio.sleep(0.1)
             send_serial("STATE:DONE")
@@ -1806,7 +1805,7 @@ def on_chat_message(data):
             if not reply:
                 reply = f"Div, FoxDynamiX belum nemu data cuaca buat '{loc}' 🦊"
 
-            socketio.emit("reply", {"msg": reply})
+            socketio.emit("reply", {"msg": reply}, to=sid)
             send_serial("STATE:ANSWER")
             socketio.sleep(0.1)
             send_serial("STATE:DONE")
@@ -1828,7 +1827,7 @@ def on_chat_message(data):
                     f"{saved.get('url','')}"
                 )
 
-                socketio.emit("reply", {"msg": reply})
+                socketio.emit("reply", {"msg": reply}, to=sid)
                 send_serial("STATE:ANSWER")
                 socketio.sleep(0.05)
                 send_serial("STATE:DONE")
@@ -1876,7 +1875,7 @@ def on_chat_message(data):
                     f"FoxDynamiX belum nemu data mata uang untuk {negara.title()} 🦊"
                 )
 
-                socketio.emit("reply", {"msg": reply})
+                socketio.emit("reply", {"msg": reply}, to=sid)
                 send_serial("STATE:ANSWER")
                 socketio.sleep(0.05)
                 send_serial("STATE:DONE")
@@ -1901,7 +1900,7 @@ def on_chat_message(data):
                     f"{saved_intent.get('url','')}"
                 )
 
-                socketio.emit("reply", {"msg": reply})
+                socketio.emit("reply", {"msg": reply}, to=sid)
                 send_serial("STATE:ANSWER")
                 socketio.sleep(0.05)
                 send_serial("STATE:DONE")
@@ -1926,7 +1925,7 @@ def on_chat_message(data):
                 dejavu = deja_vu_prefix(is_same_as_last)
                 reply = dejavu + emotion + format_answer_payload(ans, raw.title())
 
-                socketio.emit("reply", {"msg": reply})
+                socketio.emit("reply", {"msg": reply}, to=sid)
                 send_serial("STATE:ANSWER")
                 socketio.sleep(0.05)
                 send_serial("STATE:DONE")
@@ -1935,7 +1934,7 @@ def on_chat_message(data):
             else:
                 # 🔥 JANGAN PERNAH fallback web kalau intent jelas
                 reply = "FoxDynamiX nggak nemu data intentnya 🦊"
-                socketio.emit("reply", {"msg": reply})
+                socketio.emit("reply", {"msg": reply}, to=sid)
                 send_serial("STATE:ANSWER")
                 socketio.sleep(0.05)
                 send_serial("STATE:DONE")
@@ -1970,7 +1969,7 @@ def on_chat_message(data):
         else:
             reply = "Maaf Div, FoxDynamiX belum nemu jawaban yang pas 🦊"
 
-        socketio.emit("reply", {"msg": reply})
+        socketio.emit("reply", {"msg": reply}, to=sid)
         send_serial("STATE:ANSWER")
 
         # cari web di belakang layar
@@ -1992,5 +1991,5 @@ def on_chat_message(data):
 # Main
 # =========================
 if __name__ == "__main__":
-    print("🚀 Server running at http://127.0.0.1:5000")
-    socketio.run(app, host="127.0.0.1", port=5000)
+    print("🚀 Server running on network (use your IP):5000")
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
