@@ -1635,7 +1635,7 @@ def on_chat_message(data):
         # =================
         # 2️⃣ HITUNG BIASA
         # =================
-        if not math_result and re.fullmatch(r'[\d\s\+\-\*\/\.\^\(\)=]+', text_math) and re.search(r'\d', text_math):
+        if not math_result and re.fullmatch(r'[\d\s\+\-\*\/\.\^\(\)=]+', text_math) and re.search(r'\d', text_math) and not re.search(r'[a-zA-Z]', text_math):
                 try:
                     text_eval = text_math
 
@@ -1647,12 +1647,15 @@ def on_chat_message(data):
                     result = sympify(text_eval)
                     math_result = f"Hasilnya: {result}"
 
-                except Exception:
+                except Exception as e:
+                    print("ERROR MATH:", e)
                     math_result = None
 
         # kalau ketemu hasil → langsung kirim
         if math_result:
             socketio.emit("reply", {"msg": math_result})
+            print("MASUK MATH:", text_math, "=>", math_result)
+            
             send_serial("STATE:ANSWER")
             socketio.sleep(0.1)
             send_serial("STATE:DONE")
