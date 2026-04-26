@@ -1990,6 +1990,9 @@ def on_chat_message(data):
 # =========================
 # Main
 # =========================
+import webbrowser
+
 if __name__ == "__main__":
-    print("🚀 Server running on network (use your IP):5000")
-    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+    print("🚀 Server running locally...")
+    webbrowser.open("http://127.0.0.1:5000")
+    socketio.run(app, host="127.0.0.1", port=5000, debug=True)
