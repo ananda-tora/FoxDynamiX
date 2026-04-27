@@ -1,364 +1,417 @@
 <!DOCTYPE html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>FoxDynamiX</title>
 
-    <link rel="stylesheet" href="/static/style.css" />
-    <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FoxDynamiX</title>
 
-  <body class="mode-idle">
-    <div class="app-container">
-      <!-- ================= HEADER ================= -->
-      <header class="app-header">
-        <img src="/static/logo.png" class="logo" />
-        <h1>FoxDynamiX</h1>
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
+</head>
 
-        <div class="mode-bar">
-          <span class="mode-label">Mode:</span>
-          <button class="mode-button" id="btn-idle">Idle</button>
-          <button class="mode-button" id="btn-chat">Chat</button>
-          <button class="mode-button" id="btn-manual">Manual</button>
-        </div>
-      </header>
+<body class="mode-idle">
+  <div class="app-container">
+    <!-- ================= HEADER ================= -->
+    <header class="app-header">
+      <img src="/static/logo.png" class="logo" />
+      <h1>FoxDynamiX</h1>
 
-      <!-- ================= GRID ================= -->
-      <div class="container">
-        <!-- CONTROLLER -->
-        <div class="panel controller">
-          <div class="pad-arah" id="pad-arah">
-            <div></div>
-            <div class="ctrl-button" data-cmd="MAJU">↑</div>
-            <div></div>
+      <div class="mode-bar">
+        <span class="mode-label">Mode:</span>
+        <button class="mode-button" id="btn-idle">Idle</button>
+        <button class="mode-button" id="btn-chat">Chat</button>
+        <button class="mode-button" id="btn-manual">Manual</button>
+      </div>
+    </header>
 
-            <div class="ctrl-button" data-cmd="KIRI">←</div>
-            <div class="ctrl-button" data-cmd="STOP">⛔</div>
-            <div class="ctrl-button" data-cmd="KANAN">→</div>
+    <!-- ================= GRID ================= -->
+    <div class="container">
+      <!-- CONTROLLER -->
+      <div class="panel controller">
+        <div class="pad-arah" id="pad-arah">
+          <div></div>
+          <div class="ctrl-button" data-cmd="MAJU">↑</div>
+          <div></div>
 
-            <div></div>
-            <div class="ctrl-button" data-cmd="MUNDUR">↓</div>
-            <div></div>
-          </div>
-        </div>
+          <div class="ctrl-button" data-cmd="KIRI">←</div>
+          <div class="ctrl-button" data-cmd="STOP">⛔</div>
+          <div class="ctrl-button" data-cmd="KANAN">→</div>
 
-        <!-- SERIAL LOG -->
-        <div class="panel log-panel" id="log-panel"></div>
-
-        <!-- TORA CORE -->
-        <div class="panel functions">
-          <div class="tora-big-btn" id="tora-core">
-            <img src="/static/kurama.jpg" />
-            <div class="tora-name">FoxDynamiX</div>
-          </div>
+          <div></div>
+          <div class="ctrl-button" data-cmd="MUNDUR">↓</div>
+          <div></div>
         </div>
       </div>
 
-      <!-- ================= CHAT ================= -->
-      <div class="chat-wrapper">
-        <div id="chat-log" class="chat-log"></div>
+      <!-- SERIAL LOG -->
+      <div class="panel log-panel" id="log-panel"></div>
 
-        <div id="typing-indicator" class="typing hidden">🦊 FoxDynamiX lagi mikir...</div>
-        <div id="image-preview"></div>
-
-        <div class="chat-input-area">
-          <button id="img-btn">📷</button>
-          <input id="chat-input" placeholder="Ketik pesan untuk FoxDynamiX..." />
-          <button id="chat-send">Kirim</button>
-          <input type="file" id="img-input" accept="image/*" style="display: none;" />
+      <!-- TORA CORE -->
+      <div class="panel functions">
+        <div class="tora-big-btn" id="tora-core">
+          <img src="/static/kurama.jpg" />
+          <div class="tora-name">FoxDynamiX</div>
         </div>
       </div>
     </div>
 
-    <!-- ================= JS ================= -->
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const socket = io()
-      
-        const btnIdle = document.getElementById('btn-idle')
-        const btnChat = document.getElementById('btn-chat')
-        const btnManual = document.getElementById('btn-manual')
-      
-        const padBtns = document.querySelectorAll('#pad-arah .ctrl-button')
-      
-        const chatLog = document.getElementById('chat-log')
-        const chatInput = document.getElementById('chat-input')
-        const chatSend = document.getElementById('chat-send')
-        const imgBtn = document.getElementById('img-btn')
-        const imgInput = document.getElementById('img-input')
-        let selectedImage = null //cuma 1
-        function lockChat() {
-          chatInput.disabled = true
-          chatSend.disabled = true
-          chatSend.classList.add('disabled')
-        }
-      
-        function unlockChat() {
-          chatInput.disabled = false
-          chatSend.disabled = false
-          chatSend.classList.remove('disabled')
-          chatInput.focus()
-        }
-      
-        const typing = document.getElementById('typing-indicator')
-        const logPanel = document.getElementById('log-panel')
-        const toraCore = document.getElementById('tora-core')
-      
-        function setToraState(state) {
-          toraCore.classList.remove('tora-idle', 'tora-think', 'tora-answer', 'tora-error')
-      
-          if (state === 'IDLE') toraCore.classList.add('tora-idle')
-          if (state === 'THINK') toraCore.classList.add('tora-think')
-          if (state === 'ANSWER') toraCore.classList.add('tora-answer')
-          if (state === 'ERROR') toraCore.classList.add('tora-error')
-        }
-      
-        let mode = 'idle'
-      
-        // ================= MODE CLASS =================
-        function applyModeClass() {
-          document.body.classList.remove('mode-idle', 'mode-chat', 'mode-manual')
-          document.body.classList.add('mode-' + mode)
-        }
-      
-        // ================= UTIL =================
-        function addChat(role, text, isHTML = false) {
-          const el = document.createElement('div')
-          el.className = role === 'user' ? 'user-msg' : 'bot-msg'
+    <!-- ================= CHAT ================= -->
+    <div class="chat-wrapper">
+      <div id="chat-log" class="chat-log"></div>
 
-          let safe = String(text || '')
-          safe = safe.replace(/&/g, '&amp;')
-          safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          safe = safe.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" class="chat-link">$1</a>')
-          safe = safe.replace(/\n/g, '<br>')
+      <div id="typing-indicator" class="typing hidden">🦊 FoxDynamiX lagi mikir...</div>
+      <div id="image-preview"></div>
 
-          if (isHTML) {
-            el.innerHTML = text
-          } else {
-            el.innerHTML = safe
-          }
-          chatLog.appendChild(el)
+      <div class="chat-input-area">
+        <button id="img-btn">📷</button>
+        <input id="chat-input" placeholder="Ketik pesan untuk FoxDynamiX..." />
+        <button id="chat-send" class="disabled">Kirim</button>
+        <input type="file" id="img-input" accept="image/*" style="display: none;" />
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= JS ================= -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const socket = io()
+
+      const btnIdle = document.getElementById('btn-idle')
+      const btnChat = document.getElementById('btn-chat')
+      const btnManual = document.getElementById('btn-manual')
+
+      const padBtns = document.querySelectorAll('#pad-arah .ctrl-button')
+
+      const chatLog = document.getElementById('chat-log')
+      const chatInput = document.getElementById('chat-input')
+      const chatSend = document.getElementById('chat-send')
+      const imgBtn = document.getElementById('img-btn')
+      const imgInput = document.getElementById('img-input')
+      let selectedImage = null //cuma 1
+      function lockChat() {
+        chatInput.disabled = true
+        chatSend.disabled = true
+        chatSend.classList.add('disabled')
+      }
+
+      function unlockChat() {
+        chatInput.disabled = false
+        chatSend.disabled = false
+        chatSend.classList.remove('disabled')
+        chatInput.focus()
+      }
+
+      const typing = document.getElementById('typing-indicator')
+      const logPanel = document.getElementById('log-panel')
+      const toraCore = document.getElementById('tora-core')
+
+      function setToraState(state) {
+        toraCore.classList.remove('tora-idle', 'tora-think', 'tora-answer', 'tora-error')
+
+        if (state === 'IDLE') toraCore.classList.add('tora-idle')
+        if (state === 'THINK') toraCore.classList.add('tora-think')
+        if (state === 'ANSWER') toraCore.classList.add('tora-answer')
+        if (state === 'ERROR') toraCore.classList.add('tora-error')
+      }
+
+      let mode = 'idle'
+
+      // ================= MODE CLASS =================
+      function applyModeClass() {
+        document.body.classList.remove('mode-idle', 'mode-chat', 'mode-manual')
+        document.body.classList.add('mode-' + mode)
+      }
+
+      // ================= UTIL =================
+      function addChat(role, text, isHTML = false) {
+        const el = document.createElement('div')
+        el.className = role === 'user' ? 'user-msg' : 'bot-msg'
+
+        let safe = String(text || '')
+        safe = safe.replace(/&/g, '&amp;')
+        safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        safe = safe.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" class="chat-link">$1</a>')
+        safe = safe.replace(/\n/g, '<br>')
+
+        if (isHTML) {
+          el.innerHTML = text
+        } else {
+          el.innerHTML = safe
+        }
+        chatLog.appendChild(el)
+        chatLog.scrollTop = chatLog.scrollHeight
+      }
+      let typingInterval = null
+
+      function showTyping(text = "🦊 FoxDynamiX lagi mikir") {
+        typing.classList.remove('hidden')
+
+        let dots = 0
+
+        if (typingInterval) clearInterval(typingInterval)
+
+        typingInterval = setInterval(() => {
+          dots = (dots + 1) % 4
+          typing.innerText = text + ".".repeat(dots)
+        }, 400)
+      }
+
+      function hideTyping() {
+        typing.classList.add('hidden')
+
+        if (typingInterval) {
+          clearInterval(typingInterval)
+          typingInterval = null
+        }
+      }
+
+      function typeText(text) {
+        const el = document.createElement('div')
+        el.className = 'bot-msg'
+        chatLog.appendChild(el)
+
+        // 🔥 TORA JAWAB → GLOW HIJAU + PULSE
+        setToraState('ANSWER')
+
+        let safe = String(text || '')
+
+        // escape html
+        safe = safe.replace(/&/g, '&amp;')
+
+        // bold markdown
+        safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+
+        // link auto
+        safe = safe.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" class="chat-link">$1</a>')
+
+        // newline
+        safe = safe.replace(/\n/g, '<br>')
+
+        let i = 0
+        const speed = Math.max(1, Math.floor(500 / safe.length))
+
+        const timer = setInterval(() => {
+          el.innerHTML = safe.slice(0, i)
           chatLog.scrollTop = chatLog.scrollHeight
-        }
-        function showTyping() {
-          typing.classList.remove('hidden')
-        }
-      
-        function hideTyping() {
-          typing.classList.add('hidden')
-        }
-      
-        function typeText(text) {
-          const el = document.createElement('div')
-          el.className = 'bot-msg'
-          chatLog.appendChild(el)
-      
-          // 🔥 TORA JAWAB → GLOW HIJAU + PULSE
-          setToraState('ANSWER')
-      
-          let safe = String(text || '')
-      
-          // escape html
-          safe = safe.replace(/&/g, '&amp;')
-      
-          // bold markdown
-          safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      
-          // link auto
-          safe = safe.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" class="chat-link">$1</a>')
-      
-          // newline
-          safe = safe.replace(/\n/g, '<br>')
-      
-          let i = 0
-          const speed = Math.max(1, Math.floor(500 / safe.length))
-      
-          const timer = setInterval(() => {
-            el.innerHTML = safe.slice(0, i)
-            chatLog.scrollTop = chatLog.scrollHeight
-            i++
-      
-            // ✅ selesai mengetik
-            if (i > safe.length) {
-              clearInterval(timer)
-      
-              // 💤 balik ke idle (napas biru)
-              setToraState('IDLE')
-              unlockChat() // 🔓 TAMBAHKAN INI
-            }
-          }, speed)
-        }
-      
-        // ================= MODE =================
-        function highlight(btn) {
-          ;[btnIdle, btnChat, btnManual].forEach((b) => b.classList.remove('active'))
-          btn.classList.add('active')
-        }
-      
-        function reset() {
-          mode = 'idle'
-          highlight(btnIdle)
-          chatInput.disabled = true
-          chatSend.disabled = true
-          socket.emit('set_mode', { mode: 'idle' })
-          applyModeClass()
-        }
-      
-        reset()
-      
-        btnIdle.onclick = reset
-      
-        btnChat.onclick = () => {
-          if (mode === 'chat') return reset()
-          mode = 'chat'
-          highlight(btnChat)
-          chatInput.disabled = false
-          chatSend.disabled = false
-          socket.emit('set_mode', { mode: 'chat' })
-          applyModeClass()
-        }
-      
-        btnManual.onclick = () => {
-          if (mode === 'manual') return reset()
-          mode = 'manual'
-          highlight(btnManual)
-          chatInput.disabled = true
-          chatSend.disabled = true
-          socket.emit('set_mode', { mode: 'manual' })
-          applyModeClass()
-        }
-      
-        // ================= MANUAL =================
-        padBtns.forEach((btn) => {
-          btn.onclick = () => {
-            if (mode !== 'manual') return
-            socket.emit('send_cmd', { cmd: btn.dataset.cmd })
+          i++
+
+          // ✅ selesai mengetik
+          if (i > safe.length) {
+            clearInterval(timer)
+
+            // 💤 balik ke idle (napas biru)
+            setToraState('IDLE')
+            unlockChat() // 🔓 TAMBAHKAN INI
           }
-        })
-        
-          imgBtn.onclick = () => {
-            imgInput.value = "" //reset sebelum pilih
-            imgInput.click()
-          }
-          imgInput.onchange = (event) => {
-            if (selectedImage) return
+        }, speed)
+      }
 
-            const file = event.target.files[0]
-            if (!file) return
+      // ================= MODE =================
+      function highlight(btn) {
+        ;[btnIdle, btnChat, btnManual].forEach((b) => b.classList.remove('active'))
+        btn.classList.add('active')
+      }
 
-            const reader = new FileReader()
+      function reset() {
+        mode = 'idle'
+        highlight(btnIdle)
+        chatInput.disabled = true
+        chatSend.disabled = true
+        imgBtn.disabled = true
+        socket.emit('set_mode', { mode: 'idle' })
+        chatSend.classList.add('disabled')
+        applyModeClass()
+      }
 
-            reader.onloadend = (e) => {
-              selectedImage = e.target.result
+      reset()
 
-              console.log("✅ IMAGE SIAP")
-              console.log("📦 selectedImage:", selectedImage) // ✅ INI YANG BENAR
+      btnIdle.onclick = reset
 
-              const preview = document.getElementById('image-preview')
+      btnChat.onclick = () => {
+        if (mode === 'chat') return reset()
+        mode = 'chat'
+        highlight(btnChat)
+        chatInput.disabled = false
+        chatSend.disabled = false
+        imgBtn.disabled = false
+        socket.emit('set_mode', { mode: 'chat' })
+        chatSend.classList.remove('disabled')
+        applyModeClass()
+      }
 
-              preview.innerHTML = `
-                <div class="img-box">
-                  <img src="${selectedImage}" class="chat-img" />
-                  <span class="delete-img">×</span>
-                </div>
-              `
+      btnManual.onclick = () => {
+        if (mode === 'manual') return reset()
+        mode = 'manual'
+        highlight(btnManual)
+        chatInput.disabled = true
+        chatSend.disabled = true
+        imgBtn.disabled = true
+        hideTyping()
+        socket.emit('set_mode', { mode: 'manual' })
+        chatSend.classList.add('disabled')
+        applyModeClass()
+      }
 
-              document.querySelector('.delete-img').onclick = () => {
-                preview.innerHTML = ''
-                selectedImage = null
-              }
-           }
-
-            reader.readAsDataURL(file)
-          }
-
-        // ================= CHAT =================
-        chatSend.addEventListener('click', () => {
-          console.log("🔥 KLIK KEDETEK")
-
-          if (mode !== 'chat') {
-            console.log("❌ BUKAN MODE CHAT:", mode)
-            return
-          }
-
-          const text = chatInput.value.trim()
-          const currentImage = selectedImage ? String(selectedImage) : null
-
-          console.log("📨 TEXT:", text)
-          console.log("🖼 IMAGE:", selectedImage)
-
-          if (!text && !currentImage) {
-            console.log("❌ KOSONG")
-            return
-          }
-
-          let payload = {
-            msg: text,
-            image: currentImage
-          }
-
-          console.log("🚀 KIRIM:", payload)
-
-          // ✅ TAMBAHKAN INI
-          if (currentImage) {
-            addChat('user', `
-              <div style="display:flex; flex-direction:column; gap:6px;">
-                   <img src="${currentImage}" 
-                      style="max-width:180px; border-radius:12px;">
-                    ${text ? `<div>${text}</div>` : ""}
-              </div>
-            `, true)
-          } else {
-            addChat('user', text)
-          }
-          
-          lockChat()
-
-          socket.emit("chat_message", payload)
-
-          // 🔥 RESET YANG BENAR
-          selectedImage = null
-          chatInput.value = ''
-          document.getElementById('image-preview').innerHTML = ''
-          imgInput.value = ""
-
-          showTyping()
-        })
-        socket.on('reply', (data) => {
-          console.log("📩 FRONTEND DAPET:", data)
-
-          hideTyping()
-      
-          let text = data.msg
-      
-          if (typeof text !== 'string') {
-            text = JSON.stringify(text, null, 2)
-          }
-      
-          // unlockChat() // 🔥 TAMBAH INI DI SINI
-      
-          typeText(text)
-        })
-        socket.on('tora_state', (data) => {
-          setToraState(data.state)
-        })
-      
-        socket.on('log', (data) => {
-          const msg = data.msg
-      
-          if (msg.includes('STATE:IDLE')) setToraState('IDLE')
-          if (msg.includes('STATE:THINK')) setToraState('THINK')
-          if (msg.includes('STATE:ANSWER')) setToraState('ANSWER')
-          if (msg.includes('STATE:DONE')) setToraState('IDLE')
-      
-          const el = document.createElement('div')
-          el.className = 'log-row'
-          el.textContent = msg
-          logPanel.appendChild(el)
-          logPanel.scrollTop = logPanel.scrollHeight
-        })
+      // ================= MANUAL =================
+      padBtns.forEach((btn) => {
+        btn.onclick = () => {
+          if (mode !== 'manual') return
+          socket.emit('send_cmd', { cmd: btn.dataset.cmd })
+        }
       })
-    </script>
-  </body>
+
+      imgBtn.onclick = () => {
+        imgInput.value = "" //reset sebelum pilih
+        imgInput.click()
+      }
+      imgInput.onchange = (event) => {
+        if (selectedImage) return
+
+        const file = event.target.files[0]
+        if (!file) return
+
+        const reader = new FileReader()
+
+        reader.onloadend = (e) => {
+          selectedImage = e.target.result
+
+          console.log("✅ IMAGE SIAP")
+          console.log("📦 selectedImage:", selectedImage) // ✅ INI YANG BENAR
+
+          const preview = document.getElementById('image-preview')
+
+          preview.innerHTML = `
+            <div class="img-box">
+              <img src="${selectedImage}" class="chat-img" />
+              <div class="scan-line"></div>
+              <span class="delete-img">×</span>
+            </div>
+          `
+
+          document.querySelector('.delete-img').onclick = () => {
+            preview.innerHTML = ''
+            selectedImage = null
+          }
+        }
+
+        reader.readAsDataURL(file)
+      }
+
+      // 🔥 BLOCK ENTER SAAT BUKAN MODE CHAT
+      chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          if (mode !== 'chat') {
+            e.preventDefault()
+            console.log("❌ ENTER DI BLOCK (BUKAN MODE CHAT)")
+            return
+          }
+          chatSend.click()
+        }
+      })
+
+      // ================= CHAT =================
+      chatSend.addEventListener('click', () => {
+        console.log("🔥 KLIK KEDETEK")
+
+        if (chatInput.disabled) {
+          console.log("❌ CHAT MASIH TERKUNCI")
+          return
+        }
+
+        if (mode !== 'chat') {
+          console.log("❌ BUKAN MODE CHAT:", mode)
+          return
+        }
+
+        const text = chatInput.value.trim()
+        const currentImage = selectedImage ? String(selectedImage) : null
+
+        console.log("📨 TEXT:", text)
+        console.log("🖼 IMAGE:", selectedImage)
+
+        if (!text && !currentImage) {
+          console.log("❌ KOSONG")
+          return
+        }
+
+        let payload = {
+          msg: text,
+          image: currentImage
+        }
+
+        console.log("🚀 KIRIM:", payload)
+
+        // ✅ TAMBAHKAN INI
+        if (currentImage) {
+          addChat('user', `
+            <div style="display:flex; flex-direction:column; gap:6px; position:relative;">
+              <div class="img-box">
+                <img src="${currentImage}" 
+                     style="max-width:180px; border-radius:12px;">
+                <div class="scan-line"></div>
+            </div>
+            ${text ? `<div>${text}</div>` : ""}
+           </div>
+        `, true)
+        } else {
+          addChat('user', text)
+        }
+
+        lockChat()
+
+        socket.emit("chat_message", payload)
+
+        // 🔥 RESET YANG BENAR
+        selectedImage = null
+        chatInput.value = ''
+        document.getElementById('image-preview').innerHTML = ''
+        imgInput.value = ""
+
+        if (currentImage) {
+          showTyping("🖼️ Fox lagi scan gambar")
+        } else {
+          showTyping()
+        }
+      })
+      socket.on('reply', (data) => {
+        console.log("📩 FRONTEND DAPET:", data)
+
+        const scan = document.querySelector('.scan-line')
+        if (scan) scan.remove()
+
+        hideTyping()
+
+        let text = data.msg
+
+        if (typeof text !== 'string') {
+          text = JSON.stringify(text, null, 2)
+        }
+
+        // unlockChat() // 🔥 TAMBAH INI DI SINI
+
+        typeText(text)
+      })
+      socket.on('tora_state', (data) => {
+        setToraState(data.state)
+      })
+
+      socket.on('log', (data) => {
+        const msg = data.msg
+
+        if (msg.includes('STATE:IDLE')) setToraState('IDLE')
+        if (msg.includes('STATE:THINK')) setToraState('THINK')
+        if (msg.includes('STATE:ANSWER')) setToraState('ANSWER')
+        if (msg.includes('STATE:DONE')) setToraState('IDLE')
+
+        const el = document.createElement('div')
+        el.className = 'log-row'
+        el.textContent = msg
+        logPanel.appendChild(el)
+        logPanel.scrollTop = logPanel.scrollHeight
+      })
+    })
+  </script>
+</body>
+
 </html>

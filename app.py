@@ -1,37 +1,35 @@
+import webbrowser
+import random
+from collections import OrderedDict
+import torch
+from sympy import symbols, Eq, solve, sympify
+import io
+import base64
+from PIL import Image
+from brain.memory import remember, recall, remember_answer, recall_answer
+from serial.tools import list_ports
+import serial
+from fox_chat_child import child_chat
+from bs4 import BeautifulSoup  # dipakai fallback scraping
+from duckduckgo_search import DDGS
+import requests
+from flask_socketio import SocketIO, emit
+from flask import Flask, render_template, request
+import urllib3
+from dotenv import load_dotenv
+from urllib.parse import quote
+from functools import lru_cache
+import threading
+import time
+import re
+import os
+from brain.ml_intent import predict_intent
 import eventlet
 eventlet.monkey_patch()
 
-from brain.ml_intent import predict_intent
-import os
-import re
-import time
-import threading
-from functools import lru_cache
-from urllib.parse import quote
-
-from dotenv import load_dotenv
-import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-from flask import Flask, render_template, request
-from flask_socketio import SocketIO, emit
-
-import requests
-from duckduckgo_search import DDGS
-from bs4 import BeautifulSoup  # dipakai fallback scraping
-from fox_chat_child import child_chat
-import serial
-from serial.tools import list_ports
-
-from brain.memory import remember, recall, remember_answer, recall_answer
-
-from transformers import BlipProcessor, BlipForConditionalGeneration
-from PIL import Image
-import base64
-import io
-
-from sympy import symbols, Eq, solve, sympify
 
 # =========================
 # Boot & Config
@@ -45,17 +43,49 @@ current_mode = "idle"
 processor = None
 model = None
 
-import torch
+LAST_IMAGE_TIME = 0
+IMAGE_IDLE_LIMIT = 120
 
-print("🔥 preload model...")
-processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
-model.eval()
+
+def load_model_if_needed():
+    global processor, model
+
+    if processor is None or model is None:
+        print("🔥 LOAD MODEL...")
+
+        from transformers import BlipProcessor, BlipForConditionalGeneration
+
+        processor = BlipProcessor.from_pretrained(
+            "Salesforce/blip-image-captioning-base"
+        )
+        model = BlipForConditionalGeneration.from_pretrained(
+            "Salesforce/blip-image-captioning-base"
+        )
+        model.eval()
+
+
+def unload_model():
+    global processor, model
+
+    if processor is not None or model is not None:
+        print("🧹 UNLOAD MODEL...")
+
+        processor = None
+        model = None
+
+        import gc
+        gc.collect()
+
+        try:
+            import torch
+            torch.cuda.empty_cache()
+        except:
+            pass
+
 
 # =========================
 # Emotion / Repeat Memory
 # =========================
-from collections import OrderedDict
 
 QUESTION_MEMORY = OrderedDict()
 MAX_MEMORY = 10
@@ -65,7 +95,6 @@ LAST_QUESTION = None
 # =========================
 # Idle Talk Memory
 # =========================
-import random
 
 global LAST_CHAT_TIME
 LAST_CHAT_TIME = time.time()
@@ -358,7 +387,7 @@ def get_image_caption(image):
 
         # baru ini
         if "turtle" in caption or "tortoise" in caption:
-            return "kura-kura"    
+            return "kura-kura"
 
         if "waterfall" in caption:
             return "air terjun"
@@ -373,7 +402,7 @@ def get_image_caption(image):
         if "giraffe" in caption:
             return "jerapah"
         if "elephant" in caption:
-            return "gajah"               
+            return "gajah"
         if "bird" in caption:
             return "burung"
         if "mountain" in caption or "hill" in caption:
@@ -385,7 +414,7 @@ def get_image_caption(image):
         if "family" in caption:
             return "sekelompok orang"
         if "people" in caption or "person" in caption:
-            return "orang"     
+            return "orang"
         return None
 
     # 🔥 DETEKSI DULU
@@ -488,7 +517,8 @@ def get_image_caption(image):
     # 🔥 PRIORITAS OBJEK DI DEPAN (TAPI JANGAN RUSAK KELOMPOK)
     words = caption_id.split()
 
-    priority = ["singa", "gajah", "kura-kura", "ikan", "kucing", "anjing", "burung"]
+    priority = ["singa", "gajah", "kura-kura",
+                "ikan", "kucing", "anjing", "burung"]
 
     # ❌ skip kalau ada "sekelompok"
     if "sekelompok" not in caption_id:
@@ -496,9 +526,10 @@ def get_image_caption(image):
             if p in words:
                 words.remove(p)
                 caption_id = p + " " + " ".join(words)
-                break    
+                break
 
-    caption_id = caption_id.replace("kura-kura sekelompok", "sekelompok kura-kura")
+    caption_id = caption_id.replace(
+        "kura-kura sekelompok", "sekelompok kura-kura")
 
     if not caption_id.strip():
         caption_id = translate_to_indonesia(caption)
@@ -517,8 +548,10 @@ def get_image_caption(image):
     if caption_id.endswith("di"):
         caption_id = " ".join(words[:-1])
 
-    hewan = ["kucing", "anjing", "burung", "ikan", "jerapah", "kura-kura", "gajah"]
-    scene_keywords = ["sungai", "laut", "langit", "gunung", "air", "pemandangan"]
+    hewan = ["kucing", "anjing", "burung",
+             "ikan", "jerapah", "kura-kura", "gajah"]
+    scene_keywords = ["sungai", "laut",
+                      "langit", "gunung", "air", "pemandangan"]
 
     # 🔥 FIX khusus kura-kura (bukan semua burung!)
     if "shell" in caption and "kura-kura" not in caption_id:
@@ -546,7 +579,8 @@ def get_image_caption(image):
 
     # 🔥 FIX: kalau ada "kelompok" tapi gak ada "orang"
     if "kelompok" in caption_id and "orang" not in caption_id and not any(h in caption_id for h in hewan):
-        caption_id = "sekelompok orang " + caption_id.replace("kelompok", "").strip()
+        caption_id = "sekelompok orang " + \
+            caption_id.replace("kelompok", "").strip()
 
         # 🔥 ORANG DULU
     if "kelompok orang" in caption_id or "sekelompok orang" in caption_id:
@@ -612,17 +646,21 @@ def fix_caption_natural(text):
     text = text.replace("dua jerapah", "dua ekor jerapah")
     text = text.replace("kucing kecil oranye anak", "anak kucing kecil oranye")
     text = text.replace("kebun teh perkebunan", "perkebunan teh")
-    text = text.replace("teh di matahari", "perkebunan teh saat matahari terbenam")
+    text = text.replace("teh di matahari",
+                        "perkebunan teh saat matahari terbenam")
     text = text.replace("orang membaca", "orang yang sedang membaca")
     text = text.replace("orang duduk", "orang yang sedang duduk")
     text = text.replace("sedang sedang", "sedang")
     text = text.replace("yang yang", "yang")
-    text = text.replace("sedang duduk dan sedang membaca", "sedang duduk sambil membaca")
-    text = text.replace("sedang membaca dan sedang duduk", "sedang duduk sambil membaca")
+    text = text.replace("sedang duduk dan sedang membaca",
+                        "sedang duduk sambil membaca")
+    text = text.replace("sedang membaca dan sedang duduk",
+                        "sedang duduk sambil membaca")
     text = text.replace("sebuah objek", "")
     text = text.replace("objek ", "")
     text = text.replace("sambil sedang", "sambil")
-    text = text.replace("sedang membersihkan lantai", "sedang membersihkan lantai")
+    text = text.replace("sedang membersihkan lantai",
+                        "sedang membersihkan lantai")
 
     # 🔥 hapus sisa english jelek
     text = re.sub(r"\b(view|scene|image|photo)\b", "", text)
@@ -699,7 +737,8 @@ def fix_caption_natural(text):
 
     # 🔥 HAPUS SISA INGGRIS PANJANG
 
-    words = [w for w in words if w in allowed or (w.isalpha() and len(w) <= 10)]
+    words = [w for w in words if w in allowed or (
+        w.isalpha() and len(w) <= 10)]
 
     words = [w for w in words if w != "it"]
 
@@ -815,6 +854,22 @@ def idle_talk_loop():
 
 threading.Thread(target=serial_reader, daemon=True).start()
 threading.Thread(target=idle_talk_loop, daemon=True).start()
+
+
+def model_auto_cleanup():
+    global LAST_IMAGE_TIME, processor
+
+    while True:
+        if processor is not None and model is not None:
+            idle = time.time() - LAST_IMAGE_TIME
+
+            if idle > IMAGE_IDLE_LIMIT:
+                unload_model()
+
+        time.sleep(10)
+
+
+threading.Thread(target=model_auto_cleanup, daemon=True).start()
 
 # =========================
 # Knowledge shortcuts (keyword → judul wiki)
@@ -947,7 +1002,8 @@ def smart_web_answer(q: str):
 
     try:
         # Limit hasil awal untuk reduce processing
-        results = list(ddgs.text(q, region="wt-wt", safesearch="off", max_results=4))
+        results = list(ddgs.text(q, region="wt-wt",
+                       safesearch="off", max_results=4))
 
         # ---- Coba pakai body DuckDuckGo dulu ----
         for r in results:
@@ -1304,7 +1360,8 @@ def answer_by_intent(intent: str, entity_name: str) -> dict | None:
 
     # Label yang enak dibaca
     country_label = (
-        wd_label(q_country, "id") or wd_label(q_country, "en") or entity_name.title()
+        wd_label(q_country, "id") or wd_label(
+            q_country, "en") or entity_name.title()
     )
 
     # ========== IBU KOTA ==========
@@ -1315,7 +1372,8 @@ def answer_by_intent(intent: str, entity_name: str) -> dict | None:
 
         # Ambil elemen paling akhir (paling baru di Wikidata)
         q_cap = caps[-1]
-        cap_label = wd_label(q_cap, "id") or wd_label(q_cap, "en") or "Ibu kota"
+        cap_label = wd_label(q_cap, "id") or wd_label(
+            q_cap, "en") or "Ibu kota"
 
         summary = f"Ibu kota {country_label} adalah {cap_label}."
         return {
@@ -1336,7 +1394,8 @@ def answer_by_intent(intent: str, entity_name: str) -> dict | None:
 
         # Ambil elemen terakhir (data paling baru)
         q_head = heads[0]
-        head_label = wd_label(q_head, "id") or wd_label(q_head, "en") or "Pemimpin"
+        head_label = wd_label(q_head, "id") or wd_label(
+            q_head, "en") or "Pemimpin"
 
         summary = f"Pemimpin negara {country_label}: {head_label}."
         return {
@@ -1604,6 +1663,14 @@ def on_chat_message(data):
         raw = data.get("msg", "").strip()
         image = data.get("image")
 
+        # 🔥 TAMBAHAN DUAL MODE
+        if image:
+            mode = "heavy"
+        else:
+            mode = "light"
+
+        print(f"MODE SEKARANG: {mode}")
+
         # =========================
         # 🔥 MATH ENGINE (WAJIB DI ATAS)
         # =========================
@@ -1635,37 +1702,40 @@ def on_chat_message(data):
         # 2️⃣ HITUNG BIASA
         # =================
         if not math_result and re.fullmatch(r'[\d\s\+\-\*\/\.\^\(\)=]+', text_math) and re.search(r'\d', text_math) and not re.search(r'[a-zA-Z]', text_math):
-                try:
-                    text_eval = text_math
+            try:
+                text_eval = text_math
 
-                    if text_eval.endswith("="):
-                        text_eval = text_eval[:-1]
+                if text_eval.endswith("="):
+                    text_eval = text_eval[:-1]
 
-                    text_eval = text_eval.replace("^", "**")
+                text_eval = text_eval.replace("^", "**")
 
-                    result = sympify(text_eval)
-                    math_result = f"Hasilnya: {result}"
+                result = sympify(text_eval)
+                math_result = f"Hasilnya: {result}"
 
-                except Exception as e:
-                    print("ERROR MATH:", e)
-                    math_result = None
+            except Exception as e:
+                print("ERROR MATH:", e)
+                math_result = None
 
         # kalau ketemu hasil → langsung kirim
         if math_result:
             socketio.emit("reply", {"msg": math_result}, to=sid)
             print("MASUK MATH:", text_math, "=>", math_result)
-            
+
             send_serial("STATE:ANSWER")
             socketio.sleep(0.1)
             send_serial("STATE:DONE")
             return
-        
+
         # kalau tidak ada math
         print("MASUK CHAT:", raw)
         # LANJUT KE FLOW NORMAL (JANGAN RETURN DI SINI)
 
         # 🔥 TAMBAH BLOK INI
-        if image and isinstance(image, str) and image.startswith("data:image"):
+        if mode == "heavy" and image and isinstance(image, str) and image.startswith("data:image"):
+            global LAST_IMAGE_TIME
+            LAST_IMAGE_TIME = time.time()
+
             try:
                 print("🔥 MASUK IMAGE MODE")
 
@@ -1675,6 +1745,8 @@ def on_chat_message(data):
                 print("📏 resize...")
                 img = img.resize((224, 224))
                 img = img.convert("RGB")
+
+                load_model_if_needed()
 
                 print("🧠 generate caption...")
                 caption = get_image_caption(img) or "objek tidak dikenali"
@@ -1814,7 +1886,8 @@ def on_chat_message(data):
         # ---- CURRENCY ROUTING
         if low_norm.startswith("mata uang"):
 
-            negara = low_norm.replace("mata uang", "").replace("uang", "").strip()
+            negara = low_norm.replace(
+                "mata uang", "").replace("uang", "").strip()
             key = f"mata uang {negara}"
 
             # 1️⃣ cek memory dulu
@@ -1822,9 +1895,9 @@ def on_chat_message(data):
             if saved:
                 reply = (
                     "🦊 Dari ingatan FoxDynamiX:\n\n"
-                    f"{saved.get('answer','')}\n\n"
-                    f"Sumber: {saved.get('source','')}\n"
-                    f"{saved.get('url','')}"
+                    f"{saved.get('answer', '')}\n\n"
+                    f"Sumber: {saved.get('source', '')}\n"
+                    f"{saved.get('url', '')}"
                 )
 
                 socketio.emit("reply", {"msg": reply}, to=sid)
@@ -1895,9 +1968,9 @@ def on_chat_message(data):
             if saved_intent:
                 reply = (
                     "🦊 Dari ingatan FoxDynamiX:\n\n"
-                    f"{saved_intent.get('answer','')}\n\n"
-                    f"Sumber: {saved_intent.get('source','')}\n"
-                    f"{saved_intent.get('url','')}"
+                    f"{saved_intent.get('answer', '')}\n\n"
+                    f"Sumber: {saved_intent.get('source', '')}\n"
+                    f"{saved_intent.get('url', '')}"
                 )
 
                 socketio.emit("reply", {"msg": reply}, to=sid)
@@ -1923,7 +1996,8 @@ def on_chat_message(data):
 
                 emotion = emotion_prefix(repeat_count)
                 dejavu = deja_vu_prefix(is_same_as_last)
-                reply = dejavu + emotion + format_answer_payload(ans, raw.title())
+                reply = dejavu + emotion + \
+                    format_answer_payload(ans, raw.title())
 
                 socketio.emit("reply", {"msg": reply}, to=sid)
                 send_serial("STATE:ANSWER")
@@ -1977,7 +2051,8 @@ def on_chat_message(data):
             better = smart_web_answer(topic)
             if better:
                 better_text = format_answer_payload(better, raw.title())
-                socketio.emit("reply", {"msg": "🔄 Update dari web:\n\n" + better_text})
+                socketio.emit(
+                    "reply", {"msg": "🔄 Update dari web:\n\n" + better_text})
 
         # threading.Thread(target=update_from_web, daemon=True).start()
 
@@ -1987,10 +2062,10 @@ def on_chat_message(data):
     finally:
         IS_PROCESSING = False
 
+
 # =========================
 # Main
 # =========================
-import webbrowser
 
 if __name__ == "__main__":
     print("🚀 Server running locally...")
