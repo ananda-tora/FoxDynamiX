@@ -189,7 +189,7 @@
         safe = safe.replace(/\n/g, '<br>')
 
         let i = 0
-        const speed = Math.max(1, Math.floor(500 / safe.length))
+        const speed = 15
 
         const timer = setInterval(() => {
           el.innerHTML = safe.slice(0, i)
@@ -377,8 +377,7 @@
       socket.on('reply', (data) => {
         console.log("📩 FRONTEND DAPET:", data)
 
-        const scan = document.querySelector('.scan-line')
-        if (scan) scan.remove()
+        document.querySelectorAll('.scan-line').forEach(el => el.remove())
 
         hideTyping()
 
